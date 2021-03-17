@@ -131,3 +131,5 @@ dmypy.json
 credentials.yaml
 
 config.yaml
+
+gitUrl
