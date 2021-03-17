@@ -9,7 +9,7 @@ class Valorant(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='agent', brief='Pass username#tag gameType', description="Returns agent data")
+    @commands.command(name='agent', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns agent data")
     async def config_valorant_agent(self, context, command, type=None):
         try:
             if type == None:
@@ -39,7 +39,7 @@ class Valorant(commands.Cog):
         except:
             await context.send("Error. Please check syntax and try again")
     
-    @commands.command(name='weapon', brief='Pass username#tag gameType', description="Returns weapon data")
+    @commands.command(name='weapon', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns weapon data")
     async def config_valorant_weapon(self, context, command, type=None):
         try:
             if type == None:
@@ -69,7 +69,7 @@ class Valorant(commands.Cog):
         except:
             await context.send("Error. Please check syntax and try again")
     
-    @commands.command(name='stats', brief='Pass username#tag gameType', description="Returns player stats")
+    @commands.command(name='stats', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns player stats")
     async def config_valorant_stats(self, context, command, type=None):
         try:
             if type == None:
@@ -116,7 +116,7 @@ class Valorant(commands.Cog):
         except:
             await context.send("Error. Please check syntax and try again")
     
-    @commands.command(name='accuracy', brief='Pass username#tag gameType', description="Returns player accuracy")
+    @commands.command(name='accuracy', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns player accuracy")
     async def config_accuracy(self, context, command, type=None):
         try:
             if type == None:
