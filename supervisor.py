@@ -34,7 +34,7 @@ def Pull_Thread():
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     logging.info("date and time =", dt_string)
     logging.debug(subprocess.run(['cd /home/ubuntu/Valorant-Discord/'],shell=True))
-    logging.debug(subprocess.run(['git pull ' + URL + ' master'],shell=True))
+    logging.debug(subprocess.run(['git pull ' + URL + ' main'],shell=True))
     time.sleep(3)
     logging.debug(subprocess.run(['sudo systemctl restart discordbot'],shell=True))
     logging.info("Finished Pull")
