@@ -1,2 +1,2 @@
 # Valorant-Discord
-A discord bot that provides valorant stats
+A discord bot that provides stats on specified players
