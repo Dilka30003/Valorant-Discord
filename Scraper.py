@@ -114,7 +114,7 @@ def GenerateAgentGraphic(player:Player) -> Image:
     subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
     MARGIN = 10
 
-    for i in range(3):
+    for i in range(len(player.agents)):
         agent = player.agents[i]
         img.paste(agent.image, (MARGIN, i*(156+256)), agent.image)
         draw = ImageDraw.Draw(img)
@@ -140,7 +140,7 @@ def GenerateWeaponGraphic(player:Player) -> Image:
     positions.append(player.weapons[0].image.height + spacing)
     positions.append(positions[1] + player.weapons[1].image.height + spacing)
 
-    for i in range(3):
+    for i in range(len(player.weapons)):
         weapon = player.weapons[i]
         img.paste(weapon.image, (MARGIN, int(positions[i])), weapon.image)
         draw = ImageDraw.Draw(img)
