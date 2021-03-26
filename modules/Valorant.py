@@ -41,6 +41,7 @@ class Valorant(commands.Cog):
     
     @commands.command(name='weapon', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns weapon data")
     async def config_valorant_weapon(self, context, command, type=None):
+        print("running")
         try:
             if type == None:
                 type = "unrated"

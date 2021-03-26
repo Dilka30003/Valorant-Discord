@@ -53,11 +53,13 @@ def GetStats(name:str, tag:str, type:str):
     player.damage.assists = int(stats[4])
     player.game.scorePerRound = float(stats[5])
     player.damage.killsPerRound = float(stats[6])
-    player.game.firstBlood = int(stats[7])
-    player.game.ace = int(stats[8])
-    player.game.clutch = int(stats[9])
-    player.game.flawless = int(stats[10])
-    player.game.mostKills = int(stats[11])
+    #player.game.firstBlood = int(stats[7])
+    #player.game.ace = int(stats[8])
+    player.game.firstBlood = -1
+    player.game.ace = -1
+    player.game.clutch = int(stats[7])
+    player.game.flawless = int(stats[8])
+    player.game.mostKills = int(stats[9])
 
     agent_stats = results.find('div', class_='top-agents__table-container')                         # Get table of top 3 agents
     rows = agent_stats.next.find_all('tr')
