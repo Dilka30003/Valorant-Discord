@@ -152,6 +152,7 @@ class Valorant(commands.Cog):
     async def config_leaderboard(self, context, command=None, user=None):
         try:
             path = "storage/leaderboard/" + str(context.message.guild.id)
+            user = user.lower();
             if command == None:
                 pass
 
@@ -170,8 +171,6 @@ class Valorant(commands.Cog):
                     elif (player[0] == 404):
                         await context.send("Player does not exist")
                         return
-
-
 
                     user += '\n'
                     currentUsers = []
@@ -192,7 +191,25 @@ class Valorant(commands.Cog):
                 return
                 
             elif command == "remove":
-                pass
+                if user is not None:
+                    user += '\n'
+                    currentUsers = []
+                    if os.path.isfile(path):
+                        with open(path, 'r') as f:
+                            currentUsers = f.readlines()
+
+                    if user in currentUsers:
+                        currentUsers.pop(currentUsers.index(user))
+                    else:
+                        await context.send("Player is not in the list")
+                        return
+
+                    with open("storage/leaderboard/" + str(context.message.guild.id), 'w+') as f:
+                        f.writelines(currentUsers)
+                    await context.send("Player has been removed")
+                else:
+                    await context.send("Please Provide A Player")
+                return
 
             name = command.split('#')[0]
             tag = command.split('#')[1]
