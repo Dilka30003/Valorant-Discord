@@ -152,12 +152,9 @@ class Valorant(commands.Cog):
     async def config_leaderboard(self, context, command=None, user=None):
         try:
             path = "storage/leaderboard/" + str(context.message.guild.id)
-            user = user.lower();
-            if command == None:
-                pass
-
-            elif command == "add":
+            if command == "add":
                 if user is not None:
+                    user = user.lower();
                     await context.send("Checking Player")
                     name = user.split('#')[0]
                     tag = user.split('#')[1]
@@ -192,6 +189,7 @@ class Valorant(commands.Cog):
                 
             elif command == "remove":
                 if user is not None:
+                    user = user.lower();
                     user += '\n'
                     currentUsers = []
                     if os.path.isfile(path):
@@ -210,25 +208,23 @@ class Valorant(commands.Cog):
                 else:
                     await context.send("Please Provide A Player")
                 return
+            else:
+                if command == None:
+                    command = "unrated"
+                elif command == "comp":
+                    command = "competitive"
+                elif command == "spike":
+                    command = "spikerush"
 
-            name = command.split('#')[0]
-            tag = command.split('#')[1]
-            await context.send("Pulling latest data")
-            player = Scraper.GetStats(name, tag, type)
+                with open(path, 'r') as f:
+                    currentUsers = f.readlines()
+                leaderBoard = []
+                for user in currentUsers:
+                    name = user.split('#')[0]
+                    tag = user.split('#')[1]
+                    player = Scraper.GetStats(name, tag, command)
+                    leaderBoard.append((user, player[1].game.scorePerRound))
 
-            if (player[0] == 0):
-                message = ""
-                message += '```' + '\n'
-                message += 'Head: ' + '{text: <6}'.format(text=str(player[1].accuracy.headRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.head)) + ' Hits\n'
-                message += 'Body: ' + '{text: <6}'.format(text=str(player[1].accuracy.bodyRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.body)) + ' Hits\n'
-                message += 'Legs: ' + '{text: <6}'.format(text=str(player[1].accuracy.legRate)+"%")  + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.leg))  + ' Hits\n'
-                message += '```'
-
-                await context.send(message)
-            elif (player[0] == 1):
-                await context.send("User not authenicated. Please authenticate " + player[1])
-            elif (player[0] == 404):
-                await context.send("User does not exist")
         except:
             await context.send("Error. Please check syntax and try again")
 
