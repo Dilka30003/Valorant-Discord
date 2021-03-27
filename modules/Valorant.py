@@ -219,12 +219,16 @@ class Valorant(commands.Cog):
                 with open(path, 'r') as f:
                     currentUsers = f.readlines()
                 leaderBoard = []
+
+                await context.send("Getting Player Data")
                 for user in currentUsers:
                     name = user.split('#')[0]
                     tag = user.split('#')[1]
                     player = Scraper.GetStats(name, tag, command)
                     leaderBoard.append((user, player[1].game.scorePerRound))
 
+                leaderBoard.sort(key = lambda x: x[1], reverse=True) 
+                pass
         except:
             await context.send("Error. Please check syntax and try again")
 
