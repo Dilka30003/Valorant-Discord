@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import Scraper
 from io import BytesIO
+import os
 
 class Valorant(commands.Cog):
     """ValorantCog"""
@@ -125,6 +126,73 @@ class Valorant(commands.Cog):
                 type = "competitive"
             elif type == "spike":
                 type = "spikerush"
+
+            name = command.split('#')[0]
+            tag = command.split('#')[1]
+            await context.send("Pulling latest data")
+            player = Scraper.GetStats(name, tag, type)
+
+            if (player[0] == 0):
+                message = ""
+                message += '```' + '\n'
+                message += 'Head: ' + '{text: <6}'.format(text=str(player[1].accuracy.headRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.head)) + ' Hits\n'
+                message += 'Body: ' + '{text: <6}'.format(text=str(player[1].accuracy.bodyRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.body)) + ' Hits\n'
+                message += 'Legs: ' + '{text: <6}'.format(text=str(player[1].accuracy.legRate)+"%")  + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.leg))  + ' Hits\n'
+                message += '```'
+
+                await context.send(message)
+            elif (player[0] == 1):
+                await context.send("User not authenicated. Please authenticate " + player[1])
+            elif (player[0] == 404):
+                await context.send("User does not exist")
+        except:
+            await context.send("Error. Please check syntax and try again")
+    
+    @commands.command(name='leaderboard', brief='show leaderboard, add or remove user', description="Returns player leaderboard")
+    async def config_leaderboard(self, context, command=None, user=None):
+        try:
+            path = "storage/leaderboard/" + str(context.message.guild.id)
+            if command == None:
+                pass
+
+            elif command == "add":
+                if user is not None:
+                    await context.send("Checking Player")
+                    name = user.split('#')[0]
+                    tag = user.split('#')[1]
+                    player = Scraper.GetStats(name, tag, 'unrated')
+
+                    if (player[0] == 0):
+                        pass
+                    elif (player[0] == 1):
+                        await context.send("Player not authenicated. Please authenticate " + player[1])
+                        return
+                    elif (player[0] == 404):
+                        await context.send("Player does not exist")
+                        return
+
+
+
+                    user += '\n'
+                    currentUsers = []
+                    if os.path.isfile(path):
+                        with open(path, 'r') as f:
+                            currentUsers = f.readlines()
+
+                    if user in currentUsers:
+                        await context.send("Player has already been added")
+                        return
+                    currentUsers.append(user)
+
+                    with open("storage/leaderboard/" + str(context.message.guild.id), 'w+') as f:
+                        f.writelines(currentUsers)
+                    await context.send("Player has been added")
+                else:
+                    await context.send("Please Provide A Valid Player")
+                return
+                
+            elif command == "remove":
+                pass
 
             name = command.split('#')[0]
             tag = command.split('#')[1]
