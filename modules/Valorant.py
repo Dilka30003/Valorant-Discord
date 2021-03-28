@@ -220,15 +220,31 @@ class Valorant(commands.Cog):
                     currentUsers = f.readlines()
                 leaderBoard = []
 
-                await context.send("Getting Player Data")
+                msg = await context.send("Getting Player Data: " + "0/" + str(len(currentUsers)))
+                i=1
                 for user in currentUsers:
+                    await msg.edit(content="Getting Player Data: " + str(i) + "/" + str(len(currentUsers)))
+                    i+=1
                     name = user.split('#')[0]
                     tag = user.split('#')[1]
                     player = Scraper.GetStats(name, tag, command)
                     leaderBoard.append((user, player[1].game.scorePerRound))
 
                 leaderBoard.sort(key = lambda x: x[1], reverse=True) 
-                pass
+                message = "```\nPlayer Leaderboard\n"
+                maxLen = len(max(currentUsers, key = len))
+                for i in range(len(leaderBoard)):
+                    message += str(i+1) + '. '
+                    player = leaderBoard[i][0].strip()
+                    message += '{message:{fill}{align}{width}}'.format(
+                                message=player,
+                                fill=' ',
+                                align='<',
+                                width=maxLen,
+                                )
+                    message += str(leaderBoard[i][1]) + '\n'
+                message += "```"
+                await msg.edit(content=message)
         except:
             await context.send("Error. Please check syntax and try again")
 
