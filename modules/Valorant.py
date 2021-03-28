@@ -1,3 +1,4 @@
+from Player import Player
 import discord
 from discord.ext import commands
 import Scraper
@@ -154,7 +155,27 @@ class Valorant(commands.Cog):
         try:
             path = "storage/leaderboard/" + str(context.message.guild.id)
             Path("storage/leaderboard").mkdir(parents=True, exist_ok=True)
-            if command == "add":
+
+            validOptions = [[
+                    "kda",
+                    "kd",
+                    "kills",
+                    "deaths",
+                    "assists",
+                    "killsPerRound",
+                    "Headshots",
+                    "headshotRate",
+                    "dmg"
+                ], [
+                    "winRate",
+                    "wins",
+                    "scorePerRound",
+                    "mostKills",
+                    "firstBlood",
+                    "ace"
+                ]]
+
+            if command.lower() == "add":
                 if user is not None:
                     user = user.lower();
                     await context.send("Checking Player")
@@ -189,7 +210,7 @@ class Valorant(commands.Cog):
                     await context.send("Please Provide A Valid Player")
                 return
                 
-            elif command == "remove":
+            elif command.lower() == "remove":
                 if user is not None:
                     user = user.lower();
                     user += '\n'
@@ -210,13 +231,27 @@ class Valorant(commands.Cog):
                 else:
                     await context.send("Please Provide A Player")
                 return
+            elif command.lower() == "options":
+                message = ""
+                for item in validOptions[0]:
+                    message += item + "\n"
+                for item in validOptions[1]:
+                    message += item + "\n"
+                await context.send(message)
+                return
             else:
+                location = (0, 0)
                 if command == None:
-                    command = "unrated"
-                elif command == "comp":
-                    command = "competitive"
-                elif command == "spike":
-                    command = "spikerush"
+                    pass
+                elif command.lower() in map(str.lower, validOptions[0]):
+                    location = (0, [item.lower() for item in validOptions[0] ].index(command.lower()))
+                elif command.lower() in map(str.lower, validOptions[1]):
+                    location = (1, [item.lower() for item in validOptions[1] ].index(command.lower()))
+                else:
+                    await context.send("Invalid Option. See leaderboard options.")
+                    return
+                type = "unrated"
+                
 
                 with open(path, 'r') as f:
                     currentUsers = f.readlines()
@@ -229,11 +264,14 @@ class Valorant(commands.Cog):
                     i+=1
                     name = user.split('#')[0]
                     tag = user.split('#')[1]
-                    player = Scraper.GetStats(name, tag, command)
-                    leaderBoard.append((user, player[1].game.scorePerRound))
+                    player = Scraper.GetStats(name, tag, type)
+                    if location[0]:
+                        leaderBoard.append((user, getattr(player[1].game, validOptions[1][location[1]])))
+                    else:
+                        leaderBoard.append((user, getattr(player[1].damage, validOptions[0][location[1]])))
 
                 leaderBoard.sort(key = lambda x: x[1], reverse=True) 
-                message = "```\nPlayer Leaderboard " + "(Score/Round)\n"
+                message = "```\nPlayer Leaderboard " + "(" + validOptions[location[0]][location[1]] + ")\n"
                 maxLen = len(max(currentUsers, key = len))
                 for i in range(len(leaderBoard)):
                     message += str(i+1) + '. '
@@ -247,8 +285,10 @@ class Valorant(commands.Cog):
                     message += str(leaderBoard[i][1]) + '\n'
                 message += "```"
                 await msg.edit(content=message)
-        except:
+        except Exception as e:
             await context.send("Error. Please check syntax and try again")
+            await context.send(e)
+
 
             
 
