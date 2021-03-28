@@ -233,7 +233,7 @@ class Valorant(commands.Cog):
                     leaderBoard.append((user, player[1].game.scorePerRound))
 
                 leaderBoard.sort(key = lambda x: x[1], reverse=True) 
-                message = "```\nPlayer Leaderboard\n"
+                message = "```\nPlayer Leaderboard " + "(Score/Round)\n"
                 maxLen = len(max(currentUsers, key = len))
                 for i in range(len(leaderBoard)):
                     message += str(i+1) + '. '
