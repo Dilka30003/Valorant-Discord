@@ -175,7 +175,7 @@ class Valorant(commands.Cog):
                     "ace"
                 ]]
 
-            if command.lower() == "add":
+            if command == "add":
                 if user is not None:
                     user = user.lower();
                     await context.send("Checking Player")
@@ -210,7 +210,7 @@ class Valorant(commands.Cog):
                     await context.send("Please Provide A Valid Player")
                 return
                 
-            elif command.lower() == "remove":
+            elif command == "remove":
                 if user is not None:
                     user = user.lower();
                     user += '\n'
@@ -231,7 +231,7 @@ class Valorant(commands.Cog):
                 else:
                     await context.send("Please Provide A Player")
                 return
-            elif command.lower() == "options":
+            elif command == "options":
                 message = ""
                 for item in validOptions[0]:
                     message += item + "\n"
