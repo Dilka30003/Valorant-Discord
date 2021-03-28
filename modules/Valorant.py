@@ -3,6 +3,7 @@ from discord.ext import commands
 import Scraper
 from io import BytesIO
 import os
+from pathlib import Path
 
 class Valorant(commands.Cog):
     """ValorantCog"""
@@ -152,6 +153,7 @@ class Valorant(commands.Cog):
     async def config_leaderboard(self, context, command=None, user=None):
         try:
             path = "storage/leaderboard/" + str(context.message.guild.id)
+            Path("storage/leaderboard").mkdir(parents=True, exist_ok=True)
             if command == "add":
                 if user is not None:
                     user = user.lower();
