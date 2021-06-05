@@ -5,6 +5,7 @@ import Scraper
 from io import BytesIO
 import os
 from pathlib import Path
+import requests
 
 class Valorant(commands.Cog):
     """ValorantCog"""
@@ -181,14 +182,9 @@ class Valorant(commands.Cog):
                     await context.send("Checking Player")
                     name = user.split('#')[0]
                     tag = user.split('#')[1]
-                    player = Scraper.GetStats(name, tag, 'unrated')
+                    player = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{name}/{tag}')
 
-                    if (player[0] == 0):
-                        pass
-                    elif (player[0] == 1):
-                        await context.send("Player not authenicated. Please authenticate " + player[1])
-                        return
-                    elif (player[0] == 404):
+                    if (player.status_code != 200):
                         await context.send("Player does not exist")
                         return
 
@@ -231,14 +227,6 @@ class Valorant(commands.Cog):
                 else:
                     await context.send("Please Provide A Player")
                 return
-            elif command == "options":
-                message = ""
-                for item in validOptions[0]:
-                    message += item + "\n"
-                for item in validOptions[1]:
-                    message += item + "\n"
-                await context.send(message)
-                return
             else:
                 location = (0, 0)
                 if command == None:
@@ -260,18 +248,16 @@ class Valorant(commands.Cog):
                 msg = await context.send("Getting Player Data: " + "0/" + str(len(currentUsers)))
                 i=1
                 for user in currentUsers:
-                    await msg.edit(content="Getting Player Data: " + str(i) + "/" + str(len(currentUsers)))
-                    i+=1
-                    name = user.split('#')[0]
-                    tag = user.split('#')[1]
-                    player = Scraper.GetStats(name, tag, type)
-                    if location[0]:
-                        leaderBoard.append((user, getattr(player[1].game, validOptions[1][location[1]])))
-                    else:
-                        leaderBoard.append((user, getattr(player[1].damage, validOptions[0][location[1]])))
+                    if user is not None:
+                        await msg.edit(content="Getting Player Data: " + str(i) + "/" + str(len(currentUsers)))
+                        i+=1
+                        name = user.split('#')[0]
+                        tag = user.split('#')[1]
+                        player = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{name}/{tag}')
+                        leaderBoard.append((name, player.json()))
 
-                leaderBoard.sort(key = lambda x: x[1], reverse=True) 
-                message = "```\nPlayer Leaderboard " + "(" + validOptions[location[0]][location[1]] + ")\n"
+                leaderBoard.sort(key = lambda x: x[1]['data']['elo'], reverse=True) 
+                message = "```\nPlayer Leaderboard (elo)\n"
                 maxLen = len(max(currentUsers, key = len))
                 for i in range(len(leaderBoard)):
                     message += str(i+1) + '. '
@@ -282,7 +268,7 @@ class Valorant(commands.Cog):
                                 align='<',
                                 width=maxLen,
                                 )
-                    message += str(leaderBoard[i][1]) + '\n'
+                    message += str(leaderBoard[i][1]['data']['elo']) + '\n'
                 message += "```"
                 await msg.edit(content=message)
         except Exception as e:
