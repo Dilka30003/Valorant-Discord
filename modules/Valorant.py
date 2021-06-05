@@ -248,13 +248,14 @@ class Valorant(commands.Cog):
                 msg = await context.send("Getting Player Data: " + "0/" + str(len(currentUsers)))
                 i=1
                 for user in currentUsers:
-                    if user is not None:
+                    try:
                         await msg.edit(content="Getting Player Data: " + str(i) + "/" + str(len(currentUsers)))
                         i+=1
                         name = user.split('#')[0]
                         tag = user.split('#')[1]
                         player = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{name}/{tag}')
                         leaderBoard.append((name, player.json()))
+                    except: pass
 
                 leaderBoard.sort(key = lambda x: x[1]['data']['elo'], reverse=True) 
                 message = "```\nPlayer Leaderboard (elo)\n"
