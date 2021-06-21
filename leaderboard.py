@@ -69,6 +69,18 @@ class Leaderboard():
         self.__save(self.player_list, self.SERVER_ID)
 
         return response
+    
+    def update(self):
+        for player in self.player_list:
+            try:
+                data = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{player.name}/{player.tag}')
+            except:
+                pass
+
+            if data.status_code == self.Status.OK.value:
+                response = self.Status.OK
+                player.elo = data.json()['data']['elo']
+
         
     def remove(self, player:Player):
         if player in self.player_list:
@@ -90,3 +102,5 @@ if __name__ == '__main__':
 
     print(leaderboard.add(faaez))
     print(leaderboard.add(me))
+
+    leaderboard.update()
