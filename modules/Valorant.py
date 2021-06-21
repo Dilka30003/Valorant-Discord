@@ -5,7 +5,6 @@ import Scraper
 from io import BytesIO
 import os
 from pathlib import Path
-import requests
 
 class Valorant(commands.Cog):
     """ValorantCog"""
