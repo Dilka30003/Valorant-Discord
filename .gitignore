@@ -133,3 +133,5 @@ credentials.yaml
 config.yaml
 
 gitUrl
+
+storage/

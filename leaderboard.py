@@ -18,6 +18,7 @@ class Leaderboard():
     class Status(Enum):
         ERROR = 0
         DUPLICATE = 1
+        NOTFOUND = 2
 
         INVALID = 404
         NODATA = 204
@@ -46,7 +47,7 @@ class Leaderboard():
         except: pass
         return lst
 
-    def add(self, player:Player) -> bool:
+    def add(self, player:Player):
         if player in self.player_list:
             return self.Status.DUPLICATE
         try:
@@ -69,6 +70,13 @@ class Leaderboard():
 
         return response
         
+    def remove(self, player:Player):
+        if player in self.player_list:
+            self.player_list.remove(player)
+            self.__save(self.player_list, self.SERVER_ID)
+            return self.Status.OK
+        return self.Status.NOTFOUND
+        
         
     
 
@@ -77,6 +85,8 @@ if __name__ == '__main__':
 
     faaez = Player('fakinator', '4269')
     me = Player('dilka30003', '0000')
+
+    print(leaderboard.remove(faaez))
 
     print(leaderboard.add(faaez))
     print(leaderboard.add(me))
