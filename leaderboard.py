@@ -15,10 +15,6 @@ class Player():
     def __str__(self) -> str:
         return f"{self.name}#{self.tag}"
 
-class Leaderboards():
-    def __init__(self):
-        self.leaderboards = []
-
 class Leaderboard():
     class Status(Enum):
         ERROR = 0
@@ -105,7 +101,7 @@ class Leaderboard():
 
         self.player_list.sort(key = lambda x: x.elo, reverse=True)
         
-        maxLen = max([len(str(x)) for x in self.player_list])
+        maxLen = max([len(x.name) for x in self.player_list])+1
         timeDifference = datetime.now() - self.last_updated
 
         timeText = f"{timeDifference.seconds//60} Minute{'s' if timeDifference.seconds//60 != 1 else ''}" if timeDifference.seconds > 60 else f"{timeDifference.seconds} Second{'s' if timeDifference.seconds != 1 else ''}"
@@ -120,7 +116,7 @@ class Leaderboard():
                         width=(len(self.player_list) // 10),
                         )
             message += '{message:{fill}{align}{width}}'.format(
-                        message=str(player),
+                        message=player.name,
                         fill=' ',
                         align='<',
                         width=maxLen,
@@ -128,7 +124,6 @@ class Leaderboard():
             message += str(player.elo) + '\n'
         message += "```"
         return message        
-    
 
 if __name__ == '__main__':
     leaderboard = Leaderboard('test')
