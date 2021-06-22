@@ -1,6 +1,7 @@
 import requests
 import yaml
 from enum import Enum
+from datetime import datetime
 
 class Player():
     def __init__(self, name:str, tag:str, elo:int = None):
@@ -13,6 +14,10 @@ class Player():
     
     def __str__(self) -> str:
         return f"{self.name}#{self.tag}"
+
+class Leaderboards():
+    def __init__(self):
+        self.leaderboards = []
 
 class Leaderboard():
     class Status(Enum):
@@ -27,6 +32,7 @@ class Leaderboard():
     def __init__(self, SERVER_ID):
         self.SERVER_ID = str(SERVER_ID)
         self.player_list = self.__load(self.SERVER_ID)
+        self.last_updated = datetime.now()
 
     def __save(self, players, filename):
         dict = {}
@@ -69,6 +75,13 @@ class Leaderboard():
         self.__save(self.player_list, self.SERVER_ID)
 
         return response
+
+    def remove(self, player:Player):
+        if player in self.player_list:
+            self.player_list.remove(player)
+            self.__save(self.player_list, self.SERVER_ID)
+            return self.Status.OK
+        return self.Status.NOTFOUND
     
     def update(self):
         for player in self.player_list:
@@ -80,27 +93,50 @@ class Leaderboard():
             if data.status_code == self.Status.OK.value:
                 response = self.Status.OK
                 player.elo = data.json()['data']['elo']
+        self.last_updated = datetime.now()
+    
+    def generate(self):
+        # Remove anyone who doesn't have an elo
+        excluded_players = []
+        for i in range(len(self.player_list)):
+            player = self.player_list[i]
+            if player.elo is None:
+                excluded_players.append(self.player_list.pop(i))
 
+        self.player_list.sort(key = lambda x: x.elo, reverse=True)
         
-    def remove(self, player:Player):
-        if player in self.player_list:
-            self.player_list.remove(player)
-            self.__save(self.player_list, self.SERVER_ID)
-            return self.Status.OK
-        return self.Status.NOTFOUND
-        
-        
+        maxLen = max([len(str(x)) for x in self.player_list])
+        timeDifference = datetime.now() - self.last_updated
+
+        timeText = f"{timeDifference.seconds//60} Minute{'s' if timeDifference.seconds//60 != 1 else ''}" if timeDifference.seconds > 60 else f"{timeDifference.seconds} Second{'s' if timeDifference.seconds != 1 else ''}"
+
+        message = f"```\nPlayer Leaderboard (Last Updated {timeText} Ago)\n"
+        for i in range(len(self.player_list)):
+            player = self.player_list[i]
+            message += '{message:{fill}{align}{width}}'.format(
+                        message=str(i+1) + '. ',
+                        fill=' ',
+                        align='<',
+                        width=(len(self.player_list) // 10),
+                        )
+            message += '{message:{fill}{align}{width}}'.format(
+                        message=str(player),
+                        fill=' ',
+                        align='<',
+                        width=maxLen,
+                        )
+            message += str(player.elo) + '\n'
+        message += "```"
+        return message        
     
 
 if __name__ == '__main__':
     leaderboard = Leaderboard('test')
 
-    faaez = Player('fakinator', '4269')
-    me = Player('dilka30003', '0000')
-
-    print(leaderboard.remove(faaez))
-
-    print(leaderboard.add(faaez))
-    print(leaderboard.add(me))
+    leaderboard.add(Player('fakinator', '4269'))
+    leaderboard.add(Player('dilka30003', '0000'))
+    leaderboard.add(Player('8888', 'nadi'))
 
     leaderboard.update()
+    print(leaderboard.generate())
+    print(leaderboard.generate())

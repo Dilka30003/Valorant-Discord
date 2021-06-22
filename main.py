@@ -3,17 +3,14 @@ import yaml
 import os
 from os import listdir
 from os.path import isfile, join
-import time
 from datetime import datetime, timedelta
 import logging
 
 import discord
 from discord.ext import commands
 
-from mutagen.mp3 import MP3
 import asyncio
-
-userTime = {}
+from Leaderboard import Leaderboard
 
 # Remove the old log file if it exists and start logging
 try:
@@ -36,6 +33,11 @@ TOKEN = credentials['token']
 bot = commands.Bot(command_prefix=localConfig['command_prefix'])
 logging.info('Created Bot')
 
+# Create Leaderboards
+leaderboards = []
+for server in [f for f in listdir('storage/leaderboard') if isfile(join('storage/leaderboard', f))]:
+    leaderboards.append(Leaderboard(server))
+
 if __name__ == '__main__':
     for extension in [f for f in listdir('modules') if isfile(join('modules', f))]:
         bot.load_extension('modules.' + extension[:-3])
@@ -56,8 +58,22 @@ async def on_message(message):
     logging.debug('Recieved Message: ' + message.content)
     if message.author == bot.user:
         return
+    
+    if message.content[0:12].lower() == "=leaderboard":
+        arguments = message.content.split(' ').pop()
+        if arguments[0].lower == 'add':
+            pass
+            
 
 
     await bot.process_commands(message)
 
+# Background thread that runs once every 10 minutes
+async def background_task():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        print("hi")
+        await asyncio.sleep(10*60)
+
+bot.loop.create_task(background_task())
 bot.run(TOKEN)
