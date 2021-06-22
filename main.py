@@ -120,8 +120,8 @@ async def handle_leaderboard(message):
 async def background_task():
     await bot.wait_until_ready()
     while not bot.is_closed():
-        for leaderboard in leaderboards:
-            leaderboard.update()
+        for key in leaderboards:
+            leaderboards[key].update()
         await asyncio.sleep(10*60)
 
 bot.loop.create_task(background_task())
