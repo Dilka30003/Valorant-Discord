@@ -5,7 +5,6 @@ import Scraper
 from io import BytesIO
 import os
 from pathlib import Path
-import requests
 
 class Valorant(commands.Cog):
     """ValorantCog"""
@@ -150,131 +149,6 @@ class Valorant(commands.Cog):
                 await context.send("User does not exist")
         except:
             await context.send("Error. Please check syntax and try again")
-    
-    @commands.command(name='leaderboard', brief='show leaderboard, add or remove user', description="Returns player leaderboard")
-    async def config_leaderboard(self, context, command=None, user=None):
-        try:
-            path = "storage/leaderboard/" + str(context.message.guild.id)
-            Path("storage/leaderboard").mkdir(parents=True, exist_ok=True)
-
-            validOptions = [[
-                    "kda",
-                    "kd",
-                    "kills",
-                    "deaths",
-                    "assists",
-                    "killsPerRound",
-                    "Headshots",
-                    "headshotRate",
-                    "dmg"
-                ], [
-                    "winRate",
-                    "wins",
-                    "scorePerRound",
-                    "mostKills",
-                    "firstBlood",
-                    "ace"
-                ]]
-
-            if command == "add":
-                if user is not None:
-                    user = user.lower();
-                    await context.send("Checking Player")
-                    name = user.split('#')[0]
-                    tag = user.split('#')[1]
-                    player = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{name}/{tag}')
-
-                    if (player.status_code != 200):
-                        await context.send("Player does not exist")
-                        return
-
-                    user += '\n'
-                    currentUsers = []
-                    if os.path.isfile(path):
-                        with open(path, 'r') as f:
-                            currentUsers = f.readlines()
-
-                    if user in currentUsers:
-                        await context.send("Player has already been added")
-                        return
-                    currentUsers.append(user)
-
-                    with open("storage/leaderboard/" + str(context.message.guild.id), 'w+') as f:
-                        f.writelines(currentUsers)
-                    await context.send("Player has been added")
-                else:
-                    await context.send("Please Provide A Valid Player")
-                return
-                
-            elif command == "remove":
-                if user is not None:
-                    user = user.lower();
-                    user += '\n'
-                    currentUsers = []
-                    if os.path.isfile(path):
-                        with open(path, 'r') as f:
-                            currentUsers = f.readlines()
-
-                    if user in currentUsers:
-                        currentUsers.pop(currentUsers.index(user))
-                    else:
-                        await context.send("Player is not in the list")
-                        return
-
-                    with open("storage/leaderboard/" + str(context.message.guild.id), 'w+') as f:
-                        f.writelines(currentUsers)
-                    await context.send("Player has been removed")
-                else:
-                    await context.send("Please Provide A Player")
-                return
-            else:
-                location = (0, 0)
-                if command == None:
-                    pass
-                elif command.lower() in map(str.lower, validOptions[0]):
-                    location = (0, [item.lower() for item in validOptions[0] ].index(command.lower()))
-                elif command.lower() in map(str.lower, validOptions[1]):
-                    location = (1, [item.lower() for item in validOptions[1] ].index(command.lower()))
-                else:
-                    await context.send("Invalid Option. See leaderboard options.")
-                    return
-                type = "unrated"
-                
-
-                with open(path, 'r') as f:
-                    currentUsers = f.readlines()
-                leaderBoard = []
-
-                msg = await context.send("Getting Player Data: " + "0/" + str(len(currentUsers)))
-                i=1
-                for user in currentUsers:
-                    try:
-                        await msg.edit(content="Getting Player Data: " + str(i) + "/" + str(len(currentUsers)))
-                        i+=1
-                        name = user.split('#')[0]
-                        tag = user.split('#')[1]
-                        player = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr/ap/{name}/{tag}')
-                        leaderBoard.append((name, player.json()))
-                    except: pass
-
-                leaderBoard.sort(key = lambda x: x[1]['data']['elo'], reverse=True) 
-                message = "```\nPlayer Leaderboard (elo)\n"
-                maxLen = len(max(currentUsers, key = len))
-                for i in range(len(leaderBoard)):
-                    message += str(i+1) + '. '
-                    player = leaderBoard[i][0].strip()
-                    message += '{message:{fill}{align}{width}}'.format(
-                                message=player,
-                                fill=' ',
-                                align='<',
-                                width=maxLen,
-                                )
-                    message += str(leaderBoard[i][1]['data']['elo']) + '\n'
-                message += "```"
-                await msg.edit(content=message)
-        except Exception as e:
-            await context.send("Error. Please check syntax and try again")
-            await context.send(e)
 
 
             
