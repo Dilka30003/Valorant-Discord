@@ -1,3 +1,4 @@
+from discord import message
 from Player import Player
 import discord
 from discord import Embed
@@ -13,7 +14,7 @@ class Valorant(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='agent', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns agent data")
+    @commands.command(name='agents', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns agent data")
     async def config_valorant_agent(self, context, command, type=None):
         try:
             if type == None:
@@ -41,7 +42,7 @@ class Valorant(commands.Cog):
         except:
             await context.send("Error. Please check syntax and try again")
     
-    @commands.command(name='weapon', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns weapon data")
+    @commands.command(name='weapons', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns weapon data")
     async def config_valorant_weapon(self, context, command, type=None):
         try:
             if type == None:
@@ -83,33 +84,10 @@ class Valorant(commands.Cog):
 
             name = command.split('#')[0]
             tag = command.split('#')[1]
-            await context.send("Pulling latest data")
+            message = await context.send("Pulling latest data")
             player = Scraper.GetStats(name, tag, type)
 
             if (player[0] == 0):
-                message = ""
-                message += '```' + '\n'
-                message += 'Playtime:     ' + str(player[1].game.playtime)          + '\n'
-                message += 'Matches:      ' + str(player[1].game.matches)           + '\n'
-                message += 'KDA:          ' + str(player[1].damage.kda)             + '\n'
-                message += 'KD:           ' + str(player[1].damage.kd)              + '\n'
-                message += 'Win Rate:     ' + str(player[1].game.winRate)           + '\n'
-                message += 'Total Wins    ' + str(player[1].game.wins)              + '\n'
-                message += 'Damage/Round: ' + str(player[1].damage.dmg)             + '\n'
-                message += 'Score/Round   ' + str(player[1].game.scorePerRound)     + '\n'
-                message += 'Kills:        ' + str(player[1].damage.kills)           + '\n'
-                message += 'Deaths:       ' + str(player[1].damage.deaths)          + '\n'
-                message += 'Assists:      ' + str(player[1].damage.assists)         + '\n'
-                message += 'Kills/Round:  ' + str(player[1].damage.killsPerRound)   + '\n'
-                message += 'Most Kills:   ' + str(player[1].game.mostKills)         + '\n'
-                message += 'Headshots:    ' + str(player[1].damage.Headshots)       + '\n'
-                message += 'Headshot%:    ' + str(player[1].damage.headshotRate)    + '\n'
-                message += 'First Bloods: ' + str(player[1].game.firstBlood)        + '\n'
-                message += 'Aces:         ' + str(player[1].game.ace)               + '\n'
-                message += 'Clutches:     ' + str(player[1].game.clutch)            + '\n'
-                message += 'Flawless:     ' + str(player[1].game.flawless)          + '\n'
-                message += '```'
-
                 embed = Embed(color=0xfa4454)
                 embed.set_author(name=f"{name} {type} stats", url=player[1].url, icon_url=player[1].avatar)
                 embed.title=f"Playtime: {str(player[1].game.playtime)}"
@@ -134,10 +112,7 @@ class Valorant(commands.Cog):
                 embed.add_field(name="Flawless", value=str(player[1].game.flawless), inline=True)
                 embed.add_field(name="Headshot%", value=str(player[1].damage.headshotRate), inline=True)
 
-
-                await context.send(embed=embed)
-
-                #await context.send(message)
+                await message.edit(content=None, embed=embed)
             elif (player[0] == 1):
                 await context.send("User not authenicated. Please authenticate " + player[1])
             elif (player[0] == 404):
