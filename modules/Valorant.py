@@ -27,14 +27,22 @@ class Valorant(commands.Cog):
             with BytesIO() as image_binary:
                 name = command.split('#')[0]
                 tag = command.split('#')[1]
-                await context.send("Pulling latest data")
+                message = await context.send("Pulling latest data")
                 player = Scraper.GetStats(name, tag, type)
 
                 if (player[0] == 0):
                     image = Scraper.GenerateAgentGraphic(player[1])
                     image.save(image_binary, 'PNG')
                     image_binary.seek(0)
-                    await context.send(file=discord.File(fp=image_binary, filename='image.png'))
+                    file=discord.File(fp=image_binary, filename='image.png')
+
+                    embed = Embed(color=0xfa4454)
+                    embed.set_author(name=f"{name}", url=player[1].url, icon_url=player[1].avatar)
+                    embed.title="Top 3 Agents"
+                    embed.description=type
+                    embed.set_image(url="attachment://image.png")
+                    await message.delete()
+                    await context.send(file=file, embed=embed)
                 elif (player[0] == 1):
                     await context.send("User not authenicated. Please authenticate " + player[1])
                 elif (player[0] == 404):
@@ -57,14 +65,22 @@ class Valorant(commands.Cog):
             with BytesIO() as image_binary:
                 name = command.split('#')[0]
                 tag = command.split('#')[1]
-                await context.send("Pulling latest data")
+                message = await context.send("Pulling latest data")
                 player = Scraper.GetStats(name, tag, type)
 
                 if (player[0] == 0):
                     image = Scraper.GenerateWeaponGraphic(player[1])
                     image.save(image_binary, 'PNG')
                     image_binary.seek(0)
-                    await context.send(file=discord.File(fp=image_binary, filename='image.png'))
+                    file=discord.File(fp=image_binary, filename='image.png')
+
+                    embed = Embed(color=0xfa4454)
+                    embed.set_author(name=f"{name}", url=player[1].url, icon_url=player[1].avatar)
+                    embed.title="Top 3 Weapons"
+                    embed.description=type
+                    embed.set_image(url="attachment://image.png")
+                    await message.delete()
+                    await context.send(file=file, embed=embed)
                 elif (player[0] == 1):
                     await context.send("User not authenicated. Please authenticate " + player[1])
                 elif (player[0] == 404):
@@ -112,7 +128,8 @@ class Valorant(commands.Cog):
                 embed.add_field(name="Flawless", value=str(player[1].game.flawless), inline=True)
                 embed.add_field(name="Headshot%", value=str(player[1].damage.headshotRate), inline=True)
 
-                await message.edit(content=None, embed=embed)
+                await message.delete()
+                await context.send(embed=embed)
             elif (player[0] == 1):
                 await context.send("User not authenicated. Please authenticate " + player[1])
             elif (player[0] == 404):
