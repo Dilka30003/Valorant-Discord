@@ -3,6 +3,8 @@ from requests.api import head
 
 class Player:
     def __init__(self):
+        self.url = None
+        self.avatar = None
         self.damage = Damage()
         self.game = Game()
         self.agents = [ Agent(), Agent(), Agent() ]

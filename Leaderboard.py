@@ -113,7 +113,7 @@ class Leaderboard():
                         message=str(i+1) + '. ',
                         fill=' ',
                         align='<',
-                        width=(len(self.player_list) // 10),
+                        width=3+(len(self.player_list) // 10),
                         )
             message += '{message:{fill}{align}{width}}'.format(
                         message=player.name,
