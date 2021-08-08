@@ -11,6 +11,7 @@ from discord.ext import commands
 
 import asyncio
 from Leaderboard import Leaderboard, Player
+from Graph import PlayerGraph
 
 # Remove the old log file if it exists and start logging
 try:
@@ -38,6 +39,11 @@ leaderboards = {}
 for server in [f for f in listdir('storage/leaderboard') if isfile(join('storage/leaderboard', f))]:
     leaderboards[server] = Leaderboard(server)
 
+# Load player data into graph
+graphs = {}
+for filename in listdir('storage/graphs'):
+    graphs[filename] = PlayerGraph(filename.split('#')[0], filename.split('#')[1])
+
 if __name__ == '__main__':
     for extension in [f for f in listdir('modules') if isfile(join('modules', f))]:
         bot.load_extension('modules.' + extension[:-3])
@@ -60,6 +66,7 @@ async def on_message(message):
         return
 
     await handle_leaderboard(message)
+    await handle_graphs(message)
 
     await bot.process_commands(message)
 
@@ -114,6 +121,30 @@ async def handle_leaderboard(message):
                 return
             await message.channel.send("You shouldn't be seeing this message. Something broke")
 
+async def handle_graphs(message):
+    if message.content[0:6].lower() == "=graph":
+        arguments = message.content.split(' ')
+        if len(arguments) == 2:
+            if not arguments[1].lower() in graphs:
+                player = arguments[1].split('#')
+                
+                Graph = PlayerGraph(player[0].lower(), player[1].lower())
+                response = Graph.update()
+                if response == PlayerGraph.Status.INVALID:
+                    await message.channel.send("Invalid Player")
+                    return
+                graphs[arguments[1].lower()] = Graph
+            
+            file= graphs[arguments[1].lower()].draw()
+            if file is None:
+                await message.channel.send("No competitive games in history. Please play a competitive game first.")
+                return
+            await message.channel.send(file=file)
+
+
+        else:
+            await message.channel.send("Incorrect User Syntax")
+            return
 
 
 # Background thread that runs once every 10 minutes
@@ -122,6 +153,8 @@ async def background_task():
     while not bot.is_closed():
         for key in leaderboards:
             leaderboards[key].update()
+        for key in graphs:
+            graphs[key].update()
         await asyncio.sleep(10*60)
 
 bot.loop.create_task(background_task())
