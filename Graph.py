@@ -6,8 +6,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import matplotlib.ticker as plticker
+from io import BytesIO
+import discord
 
-class Player():
+class PlayerGraph():
     class Status(Enum):
         ERROR = 0
         DUPLICATE = 1
@@ -113,13 +115,25 @@ class Player():
         fig.autofmt_xdate()
         ax.yaxis.set_major_formatter(plt.FuncFormatter(rankDist))
 
+        xTicks = ax.get_xticks()
+        xTicks = range(int(xTicks[0]) - 1, int(xTicks[-1]) + 2, 1)
+        ax.set_xticks(xTicks)
+        n = (math.ceil(len(xTicks) / 6))  # Keeps ~ 6 labels
+        [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
+
         plt.yticks(range(int(math.floor(min(y) / 100.0)) * 100, int(math.ceil(max(y) / 100.0)) * 100 + 1, 25))
         plt.xlabel('Date')
         plt.ylabel('MMR')
         plt.title(f'{self.name}\'s MMR History')
-        plt.show()
+        #plt.show()
+        
+        with BytesIO() as image_binary:
+            plt.savefig(image_binary, bbox_inches='tight')
+            file=discord.File(fp=image_binary, filename='image.png')
+            return file
 
 if __name__ == '__main__':
-    me = Player('Dilka30003', '0000')
+    me = PlayerGraph('Dilka30003', '0000')
     me.update()
-    me.draw()
+    z = me.draw()
+    print("ajfnkd")
