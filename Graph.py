@@ -8,6 +8,7 @@ from matplotlib.dates import DateFormatter
 import matplotlib.ticker as plticker
 from io import BytesIO
 import discord
+from PIL import Image
 
 class PlayerGraph():
     class Status(Enum):
@@ -64,6 +65,7 @@ class PlayerGraph():
             return self.Status.INVALID
         elif data.status_code == self.Status.NODATA.value:
             response = self.Status.NODATA
+            games = []
         elif data.status_code == self.Status.OK.value:
             response = self.Status.OK
             games = data.json()['data']
@@ -76,6 +78,8 @@ class PlayerGraph():
         
         self.games = subList + self.games
         self.__save()
+
+        return response
 
     def __save(self):
         with open(f"storage/graphs/{str(self)}", 'w') as f:
@@ -94,6 +98,12 @@ class PlayerGraph():
         self.games = data
         
     def draw(self):
+        if len(self.games) == 0:
+            return None
+        # Turn interactive plotting off
+        plt.ioff()
+        plt.clf() 
+
         def rankDist(x, pos):
             if x in self.ranks:
                 return self.ranks[x]
@@ -127,10 +137,14 @@ class PlayerGraph():
         plt.title(f'{self.name}\'s MMR History')
         #plt.show()
         
-        with BytesIO() as image_binary:
-            plt.savefig(image_binary, bbox_inches='tight')
-            file=discord.File(fp=image_binary, filename='image.png')
-            return file
+        buf = BytesIO()
+        plt.savefig(buf)
+        buf.seek(0)
+        #img = Image.open(buf)
+        #img.show()
+
+        file=discord.File(buf, 'graph.png')
+        return file
 
 if __name__ == '__main__':
     me = PlayerGraph('Dilka30003', '0000')
