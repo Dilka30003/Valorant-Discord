@@ -31,7 +31,6 @@ def GetStats(name:str, tag:str, type:str):
     player = Player()                                                                               # Initialise Player
     player.url = URL
     player.avatar = results.find('image', href=True).attrs['href']
-
     player.damage.kda = float(results.find_all('span', class_='valorant-highlighted-stat__value')[-1].text) # Get KDA
 
     big_stats = results.find('div', class_='giant-stats')                                           # Get the 4 big stats from main page

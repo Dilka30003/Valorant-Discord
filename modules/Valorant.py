@@ -15,7 +15,13 @@ class Valorant(commands.Cog):
         self.bot = bot
 
     @commands.command(name='agents', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns agent data")
-    async def config_valorant_agent(self, context, command, type=None):
+    async def config_valorant_agent(self, context, *command, type=None):
+        command = list(command)
+        type = command.pop()
+        if not (type == "unrated" or type == "comp" or type == "competitive" or type == "spike" or type == "spikerush"):
+            command.append(type)
+            type = None
+        command = ' '.join(command)
         try:
             if type == None:
                 type = "unrated"
@@ -37,7 +43,7 @@ class Valorant(commands.Cog):
                     file=discord.File(fp=image_binary, filename='image.png')
 
                     embed = Embed(color=0xfa4454)
-                    embed.set_author(name=f"{name}", url=player[1].url, icon_url=player[1].avatar)
+                    embed.set_author(name=f"{name}", url=player[1].url.replace(' ', '%20'), icon_url=player[1].avatar)
                     embed.title="Top 3 Agents"
                     embed.description=type
                     embed.set_image(url="attachment://image.png")
@@ -51,7 +57,13 @@ class Valorant(commands.Cog):
             await context.send("Error. Please check syntax and try again")
     
     @commands.command(name='weapons', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns weapon data")
-    async def config_valorant_weapon(self, context, command, type=None):
+    async def config_valorant_weapon(self, context, *command, type=None):
+        command = list(command)
+        type = command.pop()
+        if not (type == "unrated" or type == "comp" or type == "competitive" or type == "spike" or type == "spikerush"):
+            command.append(type)
+            type = None
+        command = ' '.join(command)
         try:
             if type == None:
                 type = "unrated"
@@ -75,7 +87,7 @@ class Valorant(commands.Cog):
                     file=discord.File(fp=image_binary, filename='image.png')
 
                     embed = Embed(color=0xfa4454)
-                    embed.set_author(name=f"{name}", url=player[1].url, icon_url=player[1].avatar)
+                    embed.set_author(name=f"{name}", url=player[1].url.replace(' ', '%20'), icon_url=player[1].avatar)
                     embed.title="Top 3 Weapons"
                     embed.description=type
                     embed.set_image(url="attachment://image.png")
@@ -89,7 +101,13 @@ class Valorant(commands.Cog):
             await context.send("Error. Please check syntax and try again")
     
     @commands.command(name='stats', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns player stats")
-    async def config_valorant_stats(self, context, command, type=None):
+    async def config_valorant_stats(self, context, *command, type=None):
+        command = list(command)
+        type = command.pop()
+        if not (type == "unrated" or type == "comp" or type == "competitive" or type == "spike" or type == "spikerush"):
+            command.append(type)
+            type = None
+        command = ' '.join(command)
         try:
             if type == None:
                 type = "unrated"
@@ -105,7 +123,7 @@ class Valorant(commands.Cog):
 
             if (player[0] == 0):
                 embed = Embed(color=0xfa4454)
-                embed.set_author(name=f"{name} {type} stats", url=player[1].url, icon_url=player[1].avatar)
+                embed.set_author(name=f"{name} {type} stats", url=player[1].url.replace(' ', '%20'), icon_url=player[1].avatar)
                 embed.title=f"Playtime: {str(player[1].game.playtime)}"
                 embed.description=f"Matches: {str(player[1].game.matches)}"
                 
@@ -138,7 +156,13 @@ class Valorant(commands.Cog):
             await context.send("Error. Please check syntax and try again")
     
     @commands.command(name='accuracy', brief='Pass username#tag gameType (unrated, comp, etc)', description="Returns player accuracy")
-    async def config_accuracy(self, context, command, type=None):
+    async def config_accuracy(self, context, *command, type=None):
+        command = list(command)
+        type = command.pop()
+        if not (type == "unrated" or type == "comp" or type == "competitive" or type == "spike" or type == "spikerush"):
+            command.append(type)
+            type = None
+        command = ' '.join(command)
         try:
             if type == None:
                 type = "unrated"
@@ -149,18 +173,25 @@ class Valorant(commands.Cog):
 
             name = command.split('#')[0]
             tag = command.split('#')[1]
-            await context.send("Pulling latest data")
+            message = await context.send("Pulling latest data")
             player = Scraper.GetStats(name, tag, type)
 
             if (player[0] == 0):
-                message = ""
-                message += '```' + '\n'
-                message += 'Head: ' + '{text: <6}'.format(text=str(player[1].accuracy.headRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.head)) + ' Hits\n'
-                message += 'Body: ' + '{text: <6}'.format(text=str(player[1].accuracy.bodyRate)+"%") + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.body)) + ' Hits\n'
-                message += 'Legs: ' + '{text: <6}'.format(text=str(player[1].accuracy.legRate)+"%")  + ' ' + '{text: >5}'.format(text=str(player[1].accuracy.leg))  + ' Hits\n'
-                message += '```'
+                embed = Embed(color=0xfa4454)
+                embed.set_author(name=f"{name}", url=player[1].url.replace(' ', '%20'), icon_url=player[1].avatar)
+                embed.title="Accuracy"
+                embed.description=type
+                
+                embed.add_field(name="Head %", value=str(player[1].accuracy.headRate)+"%", inline=True)
+                embed.add_field(name="Body %", value=str(player[1].accuracy.bodyRate)+"%", inline=True)
+                embed.add_field(name="Leg %", value=str(player[1].accuracy.legRate)+"%", inline=True)
 
-                await context.send(message)
+                embed.add_field(name="Head Hits", value=str(player[1].accuracy.head), inline=True)
+                embed.add_field(name="Body Hits", value=str(player[1].accuracy.body), inline=True)
+                embed.add_field(name="Leg Hits", value=str(player[1].accuracy.leg), inline=True)
+                
+                await message.delete()
+                await context.send( embed=embed)
             elif (player[0] == 1):
                 await context.send("User not authenicated. Please authenticate " + player[1])
             elif (player[0] == 404):
