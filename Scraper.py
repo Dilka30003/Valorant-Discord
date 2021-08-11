@@ -80,19 +80,27 @@ def GetStats(name:str, tag:str, type:str):
     player.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
     player.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
 
-    accuracy_stats = results.find('div', class_='accuracy__content')                                # Get table of accuracy stats
-    rows = accuracy_stats.find_all('tr')
-    stats = []
-    for row in rows:
-        data = row.find_all('span', 'stat__value')
-        stats.append(data)
+    try:
+        accuracy_stats = results.find('div', class_='accuracy__content')                                # Get table of accuracy stats
+        rows = accuracy_stats.find_all('tr')
+        stats = []
+        for row in rows:
+            data = row.find_all('span', 'stat__value')
+            stats.append(data)
 
-    player.accuracy.headRate = float(stats[0][0].text[:-1])
-    player.accuracy.head = int(stats[0][1].text)
-    player.accuracy.bodyRate = float(stats[1][0].text[:-1])
-    player.accuracy.body = int(stats[1][1].text)
-    player.accuracy.legRate = float(stats[2][0].text[:-1])
-    player.accuracy.leg = int(stats[2][1].text)
+        player.accuracy.headRate = float(stats[0][0].text[:-1])
+        player.accuracy.head = int(stats[0][1].text)
+        player.accuracy.bodyRate = float(stats[1][0].text[:-1])
+        player.accuracy.body = int(stats[1][1].text)
+        player.accuracy.legRate = float(stats[2][0].text[:-1])
+        player.accuracy.leg = int(stats[2][1].text)
+    except:
+        player.accuracy.headRate = -1
+        player.accuracy.head = -1
+        player.accuracy.bodyRate = -1
+        player.accuracy.body = -1
+        player.accuracy.legRate = -1
+        player.accuracy.leg = -1
 
     weapon_stats = results.find('div', class_='top-weapons__weapons')
     weapons = results.find_all('div', class_='weapon')
