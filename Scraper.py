@@ -6,7 +6,8 @@ import yaml
 from Player import Player
 from PIL import Image, ImageFont, ImageDraw
 
-def GetStats(name:str, tag:str, type:str):
+
+def GetPage(name:str, tag:str, type:str):
     URL = 'https://tracker.gg/valorant/profile/riot/' + name + '%23' + tag + '/overview?playlist=' + type
     page = requests.get(URL)
 
@@ -20,18 +21,28 @@ def GetStats(name:str, tag:str, type:str):
     pageError = results.find_all('div', class_='content content--error')
     if (len(pageError) >0):
         if "private" in pageError[0].text.lower():
-            return 1, URL
+            return 1, URL, None
         if "404" in pageError[0].text.lower():
-            return 404, None
+            return 404, None, None
+    return None, URL, results
 
+def PlayerSetup(name:str, tag:str, type:str):
+    player = Player()
+    code, URL, results = GetPage(name, tag, type)
 
-
-
-
-    player = Player()                                                                               # Initialise Player
     player.url = URL
     player.avatar = results.find('image', href=True).attrs['href']
-    player.damage.kda = float(results.find_all('span', class_='valorant-highlighted-stat__value')[-1].text) # Get KDA
+
+    return code, URL, results, player
+
+def GetStats(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+    if results is None:
+        code, URL, results = GetPage(name, tag, type)
+
+        if code == 1:
+            return 1, URL
+        elif code == 404:
+            return 404, None
 
     big_stats = results.find('div', class_='giant-stats')                                           # Get the 4 big stats from main page
     stats = []
@@ -63,6 +74,20 @@ def GetStats(name:str, tag:str, type:str):
     player.game.flawless = int(stats[8])
     player.game.mostKills = int(stats[9])
 
+    player.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
+    player.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
+
+    return 0, player
+
+def GetAgents(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+    if results is None:
+        code, URL, results = GetPage(name, tag, type)
+
+        if code == 1:
+            return 1, URL, None
+        elif code == 404:
+            return 404, None, None
+    
     agent_stats = results.find('div', class_='top-agents__table-container')                         # Get table of top 3 agents
     rows = agent_stats.next.find_all('tr')
     rows.pop(0)                                                                                     # Remove top label row
@@ -76,10 +101,43 @@ def GetStats(name:str, tag:str, type:str):
         player.agents[i].winRate = float(data[2].text[:-1])
         player.agents[i].kd = float(data[3].text)
         player.agents[i].dmg = float(data[4].text)
+    
+    return 0, player
 
-    player.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
-    player.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
+def GetWeapons(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+    if results is None:
+        code, URL, results = GetPage(name, tag, type)
 
+        if code == 1:
+            return 1, URL, None
+        elif code == 404:
+            return 404, None, None
+    
+    weapon_stats = results.find('div', class_='top-weapons__weapons')
+    weapons = results.find_all('div', class_='weapon')
+    for i in range(len(weapons)):
+        weapon = weapons[i]
+        player.weapons[i].name = weapon.find('div', class_='weapon__name').text
+        player.weapons[i].image = Image.open(requests.get(weapon.find('img').get('src'), stream=True).raw)
+        player.weapons[i].type = weapon.find('div', class_='weapon__type').text
+        stats = weapon.find_all('span', class_='stat')
+        player.weapons[i].headRate = int(stats[0].text[:-1])
+        player.weapons[i].bodyRate = int(stats[1].text[:-1])
+        player.weapons[i].legRate = int(stats[2].text[:-1])
+        player.weapons[i].kills = int(weapon.find('span', class_='value').text.replace(',', ''))
+        pass
+
+    return 0, player
+
+def GetAccuracy(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+    if results is None:
+        code, URL, results = GetPage(name, tag, type)
+
+        if code == 1:
+            return 1, URL, None
+        elif code == 404:
+            return 404, None, None
+    
     try:
         accuracy_stats = results.find('div', class_='accuracy__content')                                # Get table of accuracy stats
         rows = accuracy_stats.find_all('tr')
@@ -101,21 +159,7 @@ def GetStats(name:str, tag:str, type:str):
         player.accuracy.body = -1
         player.accuracy.legRate = -1
         player.accuracy.leg = -1
-
-    weapon_stats = results.find('div', class_='top-weapons__weapons')
-    weapons = results.find_all('div', class_='weapon')
-    for i in range(len(weapons)):
-        weapon = weapons[i]
-        player.weapons[i].name = weapon.find('div', class_='weapon__name').text
-        player.weapons[i].image = Image.open(requests.get(weapon.find('img').get('src'), stream=True).raw)
-        player.weapons[i].type = weapon.find('div', class_='weapon__type').text
-        stats = weapon.find_all('span', class_='stat')
-        player.weapons[i].headRate = int(stats[0].text[:-1])
-        player.weapons[i].bodyRate = int(stats[1].text[:-1])
-        player.weapons[i].legRate = int(stats[2].text[:-1])
-        player.weapons[i].kills = int(weapon.find('span', class_='value').text.replace(',', ''))
-        pass
-
+    
     return 0, player
 
 def GenerateAgentGraphic(player:Player) -> Image:
@@ -161,8 +205,14 @@ def GenerateWeaponGraphic(player:Player) -> Image:
         draw.text((MARGIN+weapon.image.width + 30, positions[i] + 70*2), "Legshot: " + str(weapon.legRate) + "%",(255,255,255),font=headerFont)
         draw.text((MARGIN+weapon.image.width + 30, positions[i] + 70*3), "Kills: " + str(weapon.kills),(255,255,255),font=headerFont)
 
-
-
-
-
     return img
+
+
+if __name__ == '__main__':
+    code, URL, results, player = PlayerSetup('dilka30003', '0000', 'unrated')
+
+    code, player = GetStats(player=player, results=results)
+    code, player = GetAgents(player=player, results=results)
+    code, player = GetWeapons(player=player, results=results)
+    code, player = GetAccuracy(player=player, results=results)
+    print(player)
