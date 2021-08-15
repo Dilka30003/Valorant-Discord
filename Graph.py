@@ -1,3 +1,4 @@
+from typing import List
 import requests
 import yaml
 import math
@@ -135,6 +136,143 @@ class PlayerGraph():
         plt.xlabel('Date')
         plt.ylabel('MMR')
         plt.title(f'{self.name}\'s MMR History')
+        #plt.show()
+        
+        buf = BytesIO()
+        plt.savefig(buf)
+        buf.seek(0)
+        #img = Image.open(buf)
+        #img.show()
+
+        file=discord.File(buf, 'graph.png')
+        return file
+
+class MultiGraph():
+    class Status(Enum):
+        ERROR = 0
+        DUPLICATE = 1
+        NOTFOUND = 2
+
+        INVALID = 404
+        NODATA = 204
+        OK = 200
+
+    ranks = {
+           0: 'Iron 1',
+         100: 'Iron 2',
+         200: 'Iron 3',
+         300: 'Bronze 1',
+         400: 'Bronze 2',
+         500: 'Bronze 3',
+         600: 'Silver 1',
+         700: 'Silver 2',
+         800: 'Silver 3',
+         900: 'Gold 1',
+        1000: 'Gold 2',
+        1100: 'Gold 3',
+        1200: 'Platinum 1',
+        1300: 'Platinum 2',
+        1400: 'Platinum 3',
+        1500: 'Diamond 1',
+        1600: 'Diamond 2',
+        1700: 'Diamond 3',
+        1800: 'Immortal'
+    }
+
+    def __init__(self, players:List):
+        self.players = players
+        self.games = {}
+
+        self.__load()
+    
+    def __eq__(self, other):
+        return str(self) == str(other)
+    
+    def __str__(self) -> str:
+        return f"{self.players}"
+
+    def __load(self):
+        for player in self.players:
+            try:
+                with open(f"storage/graphs/{player[0]}#{player[1]}", 'r') as f:
+                    data = yaml.load(f)
+            except:
+                self.update(player)
+                with open(f"storage/graphs/{player[0]}#{player[1]}", 'r') as f:
+                    data = yaml.load(f)
+            if data == None:
+                data = []
+            self.games[f"{player[0]}#{player[1]}"] = data
+    
+    def __save(self, player, games):
+        with open(f"storage/graphs/{player[0]}#{player[1]}", 'w') as f:
+            yaml.dump(games, f)
+    
+    def update(self, player):
+        try:
+            data = requests.get(f'https://api.henrikdev.xyz/valorant/v1/mmr-history/ap/{player[0]}/{player[1]}')
+        except:
+            pass
+        
+        if data.status_code == self.Status.INVALID.value:
+            return self.Status.INVALID
+        elif data.status_code == self.Status.NODATA.value:
+            response = self.Status.NODATA
+            games = []
+        elif data.status_code == self.Status.OK.value:
+            response = self.Status.OK
+            games = data.json()['data']
+        
+        self.__save(player, games)
+
+        return response
+        
+    def draw(self):
+        # Turn interactive plotting off
+        plt.ioff()
+        plt.clf() 
+
+        def rankDist(x, pos):
+            if x in self.ranks:
+                return self.ranks[x]
+            return x
+        
+        minY = 999999
+        maxY = 0
+
+        fig, ax = plt.subplots()
+        for key in self.games:
+            x = []
+            y = []
+            for game in reversed(self.games[key]):
+                unix = game['date_raw']/1000        # Convert to seconds
+                time = datetime.fromtimestamp(unix)
+                date = time.strftime('%Y-%d %b')
+                x.append(time)
+                y.append(game['elo'])
+                if game['elo'] < minY:
+                    minY = game['elo']
+                elif game['elo'] > maxY:
+                    maxY = game['elo']
+
+            ax.plot(x, y)
+
+
+        myFmt = DateFormatter("%d %b %Y")
+        ax.xaxis.set_major_formatter(myFmt)
+        fig.autofmt_xdate()
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(rankDist))
+
+        xTicks = ax.get_xticks()
+        xTicks = range(int(xTicks[0]) - 1, int(xTicks[-1]) + 2, 1)
+        ax.set_xticks(xTicks)
+        n = (math.ceil(len(xTicks) / 6))  # Keeps ~ 6 labels
+        [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
+
+        plt.yticks(range(int(math.floor(minY / 100.0)) * 100, int(math.ceil(maxY / 100.0)) * 100 + 1, 25))
+        plt.xlabel('Date')
+        plt.ylabel('MMR')
+        plt.title('MMR History')
         #plt.show()
         
         buf = BytesIO()

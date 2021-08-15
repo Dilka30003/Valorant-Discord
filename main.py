@@ -11,7 +11,7 @@ from discord.ext import commands
 
 import asyncio
 from Leaderboard import Leaderboard, Player
-from Graph import PlayerGraph
+from Graph import PlayerGraph, MultiGraph
 
 # Remove the old log file if it exists and start logging
 try:
@@ -125,6 +125,7 @@ async def handle_graphs(message):
     if message.content[0:6].lower() == "=graph":
         arguments = message.content.split(' ')
         if len(arguments) == 2:
+            msg = await message.channel.send("Generating Graph")
             if not arguments[1].lower() in graphs:
                 player = arguments[1].split('#')
                 
@@ -135,16 +136,34 @@ async def handle_graphs(message):
                     return
                 graphs[arguments[1].lower()] = Graph
             
-            file= graphs[arguments[1].lower()].draw()
+            file = graphs[arguments[1].lower()].draw()
+            await msg.delete()
             if file is None:
                 await message.channel.send("No competitive games in history. Please play a competitive game first.")
                 return
             await message.channel.send(file=file)
 
-
         else:
             await message.channel.send("Incorrect User Syntax")
             return
+    
+    if message.content[0:11].lower() == "=multigraph":
+        arguments = message.content.split(' ')[1:]
+        msg = await message.channel.send("Generating Graph")
+        players = []
+        for argument in arguments:
+            player = tuple(argument.split('#'))
+            players.append(player)
+        try:
+            Graph = MultiGraph(players)
+        except:
+            await message.channel.send("Check syntax and try again")
+        file = Graph.draw()
+        await msg.delete()
+        if file is None:
+            await message.channel.send("No competitive games in history. Please play a competitive game first.")
+            return
+        await message.channel.send(file=file)
 
 
 # Background thread that runs once every 10 minutes
