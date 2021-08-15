@@ -255,7 +255,7 @@ class MultiGraph():
                 elif game['elo'] > maxY:
                     maxY = game['elo']
 
-            ax.plot(x, y)
+            ax.plot(x, y, label=f'{key.split("#")[0]}')
 
 
         myFmt = DateFormatter("%d %b %Y")
@@ -270,6 +270,7 @@ class MultiGraph():
         [l.set_visible(False) for (i,l) in enumerate(ax.xaxis.get_ticklabels()) if i % n != 0]
 
         plt.yticks(range(int(math.floor(minY / 100.0)) * 100, int(math.ceil(maxY / 100.0)) * 100 + 1, 25))
+        plt.legend(loc='upper left')
         plt.xlabel('Date')
         plt.ylabel('MMR')
         plt.title('MMR History')

@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands
 
 import asyncio
+import threading
 from Leaderboard import Leaderboard, Player
 from Graph import PlayerGraph, MultiGraph
 
@@ -58,6 +59,9 @@ async def on_ready():
     logging.info('Successfully Logged In as ' + bot.user.name + '   ' + str(bot.user.id))
     with open('version') as f:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f.read()))
+    x = threading.Thread(target=background_task, daemon=True)
+    x.start()
+    
 
 @bot.event
 async def on_message(message):
@@ -176,5 +180,4 @@ async def background_task():
             graphs[key].update()
         await asyncio.sleep(10*60)
 
-bot.loop.create_task(background_task())
 bot.run(TOKEN)
