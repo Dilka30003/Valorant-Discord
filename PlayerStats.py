@@ -3,7 +3,7 @@ from enum import Enum
 import enum
 
 from os import name
-from typing import Tuple
+from typing import Tuple, Type
 import requests
 from bs4 import BeautifulSoup
 import yaml
@@ -68,8 +68,12 @@ class Weapon:
     legRate = None
     kills = None
 
-class PlayerStats(ABC):
-    def __init__(self):
+class PlayerStats():
+    def __init__(self, name, tag, mode):
+        self.name = name
+        self.tag = tag
+        self.mode = mode
+
         self.url = None
         self.avatar = None
         self.damage = Damage()
@@ -78,20 +82,21 @@ class PlayerStats(ABC):
         self.accuracy = Accuracy()
         self.weapons = [ Weapon(), Weapon(), Weapon() ]
 
-    class codes(Enum):
+    class CODES(Enum):
         PRIVATE = "private"
         NOTFOUND = 404
     
-    class type(Enum):
+    class MODE(Enum):
         UNRATED = 'unrated'
         COMPETITIVE = 'competitive'
         COMP = 'competitive'
     
-    def UpdateStats(self, type = None):
-        if type is None:
-            type = self.type.UNRATED
-        URL = 'https://tracker.gg/valorant/profile/riot/' + self.name + '%23' + self.tag + '/overview?playlist=' + type.value
+    def UpdateStats(self):
+        URL = 'https://tracker.gg/valorant/profile/riot/' + self.name + '%23' + self.tag + '/overview?playlist=' + self.mode.value
         page = requests.get(URL)
+
+        #with open("page.html", "wb") as f:
+        #    f.write(page.content)
 
         soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -99,17 +104,20 @@ class PlayerStats(ABC):
 
         pageError = results.find_all('div', class_='content content--error')
         if (len(pageError) > 0):
-            if self.codes.PRIVATE in pageError[0].text.lower():
-                return self.codes.PRIVATE
-            if self.codes.NOTFOUND in pageError[0].text.lower():
-                return self.codes.NOTFOUND
+            if self.CODES.PRIVATE in pageError[0].text.lower():
+                return self.CODES.PRIVATE
+            if self.CODES.NOTFOUND in pageError[0].text.lower():
+                return self.CODES.NOTFOUND
 
         self.url = URL
         self.avatar = results.find('image', href=True).attrs['href']
 
-        self.__getStats(results, type)
+        self.__getStats(results)
+        self.__getAgents(results)
+        self.__getWeapons(results)
+        self.__getAccuracy(results)
 
-    def __getStats(self, results, type):
+    def __getStats(self, results):
         self.damage.kda = float(results.find_all('span', class_='valorant-highlighted-stat__value')[-1].text) # Get KDA
 
         big_stats = results.find('div', class_='giant-stats')                                           # Get the 4 big stats from main page
@@ -143,31 +151,114 @@ class PlayerStats(ABC):
         self.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
         self.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
 
-    def __getAgents(self, type):
-        pass
+    def __getAgents(self, results):
+        agent_stats = results.find('div', class_='top-agents__table-container')                         # Get table of top 3 agents
+        rows = agent_stats.next.find_all('tr')
+        rows.pop(0)                                                                                     # Remove top label row
+        for i in range(len(rows)):
+            row = rows[i]
+            self.agents[i].name = row.find('span', class_='agent__name').text
+            self.agents[i].image = Image.open(requests.get(row.find('img').get('src'), stream=True).raw)
+            data = row.find_all('span', class_='name')
+            self.agents[i].time = data[0].text
+            self.agents[i].matches = int(data[1].text)
+            self.agents[i].winRate = float(data[2].text[:-1])
+            self.agents[i].kd = float(data[3].text)
+            self.agents[i].dmg = float(data[4].text)
+        
+    def __getWeapons(self, results):
+        weapon_stats = results.find('div', class_='top-weapons__weapons')
+        weapons = results.find_all('div', class_='weapon')
+        for i in range(len(weapons)):
+            weapon = weapons[i]
+            self.weapons[i].name = weapon.find('div', class_='weapon__name').text
+            self.weapons[i].image = Image.open(requests.get(weapon.find('img').get('src'), stream=True).raw)
+            self.weapons[i].type = weapon.find('div', class_='weapon__type').text
+            stats = weapon.find_all('span', class_='stat')
+            self.weapons[i].headRate = int(stats[0].text[:-1])
+            self.weapons[i].bodyRate = int(stats[1].text[:-1])
+            self.weapons[i].legRate = int(stats[2].text[:-1])
+            self.weapons[i].kills = int(weapon.find('span', class_='value').text.replace(',', ''))
 
-    def __getWeapons(self, type):
-        pass
+    def __getAccuracy(self, results):
+        try:
+            accuracy_stats = results.find('div', class_='accuracy__content')                                # Get table of accuracy stats
+            rows = accuracy_stats.find_all('tr')
+            stats = []
+            for row in rows:
+                data = row.find_all('span', 'stat__value')
+                stats.append(data)
 
-    def __getAccuracy(self, type):
-        pass
+            self.accuracy.headRate = float(stats[0][0].text[:-1])
+            self.accuracy.head = int(stats[0][1].text)
+            self.accuracy.bodyRate = float(stats[1][0].text[:-1])
+            self.accuracy.body = int(stats[1][1].text)
+            self.accuracy.legRate = float(stats[2][0].text[:-1])
+            self.accuracy.leg = int(stats[2][1].text)
+        except:
+            self.accuracy.headRate = -1
+            self.accuracy.head = -1
+            self.accuracy.bodyRate = -1
+            self.accuracy.body = -1
+            self.accuracy.legRate = -1
+            self.accuracy.leg = -1
 
-    def AgentGraphic(self, type):
-        pass
+    def AgentGraphic(self):
+        img = Image.new('RGBA', (1920, 1200), (255, 0, 0, 0))
+        timeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
+        subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
+        MARGIN = 10
 
-    def WeaponGraphic(self, type):
-        pass
+        for i in range(len(self.agents)):
+            agent = self.agents[i]
+            img.paste(agent.image, (MARGIN, i*(156+256)), agent.image)
+            draw = ImageDraw.Draw(img)
+            draw.text((MARGIN, i*(156+agent.image.width) + agent.image.height),agent.time,(200,200,200),font=timeFont)
+            draw.text((MARGIN + agent.image.width + 10, i*(156+agent.image.height) + 36),str(agent.matches) + " Matches",(255,255,255),font=timeFont)
+            draw.text((MARGIN + agent.image.width + 10, i*(156+agent.image.height) + 154),str(agent.winRate) + "% Win Rate",(255,255,255),font=timeFont)
+            draw.text((MARGIN + agent.image.width + 10 + 800, i*(156+agent.image.height) + 36),str(agent.kd) + " K/D",(255,255,255),font=timeFont)
+            draw.text((MARGIN + agent.image.width + 10 + 800, i*(156+agent.image.height) + 154),str(agent.dmg) + " Dmg/Round",(255,255,255),font=timeFont)
+            
+        return img
+
+    def WeaponGraphic(self):
+        img = Image.new('RGBA', (1000, 1200), (255, 0, 0, 0))
+        nameFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
+        typeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 60)
+        headerFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 60)
+        MARGIN = 10
+
+        weaponHeight = self.weapons[0].image.height + self.weapons[1].image.height + self.weapons[2].image.height
+        spacing = (img.height - weaponHeight)/2 - 90
+        positions = []
+        positions.append(0)
+        positions.append(self.weapons[0].image.height + spacing)
+        positions.append(positions[1] + self.weapons[1].image.height + spacing)
+
+        for i in range(len(self.weapons)):
+            weapon = self.weapons[i]
+            img.paste(weapon.image, (MARGIN, int(positions[i])), weapon.image)
+            draw = ImageDraw.Draw(img)
+            draw.text((MARGIN+50, positions[i] + weapon.image.height + 10), weapon.name,(200,200,200),font=nameFont)
+            draw.text((MARGIN+50, positions[i] + weapon.image.height + 100 + 20), weapon.type,(200,200,200),font=typeFont)
+            draw.text((MARGIN+weapon.image.width + 30, positions[i]), "Headshot: " + str(weapon.headRate) + "%",(255,255,255),font=headerFont)
+            draw.text((MARGIN+weapon.image.width + 30, positions[i] + 70), "Bodyshot: " + str(weapon.bodyRate) + "%",(255,255,255),font=headerFont)
+            draw.text((MARGIN+weapon.image.width + 30, positions[i] + 70*2), "Legshot: " + str(weapon.legRate) + "%",(255,255,255),font=headerFont)
+            draw.text((MARGIN+weapon.image.width + 30, positions[i] + 70*3), "Kills: " + str(weapon.kills),(255,255,255),font=headerFont)
+
+        return img
 
 if __name__ == '__main__':
     class Test(PlayerStats):
-        codes = PlayerStats.codes
-        type = PlayerStats.type
+        CODES = PlayerStats.CODES
+        MODE = PlayerStats.MODE
         def __init__(self, name, tag):
-            PlayerStats.__init__(self)
             self.name = name
             self.tag = tag
+            self.Unrated = PlayerStats(name, tag, self.MODE.UNRATED)
     
     test = Test('Dilka30003', '0000')
-    test.UpdateStats(test.type.UNRATED)
-
+    test.Unrated.UpdateStats()
+    
+    test.Unrated.WeaponGraphic().show()
 
