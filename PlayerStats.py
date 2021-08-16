@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 import yaml
 from PIL import Image, ImageFont, ImageDraw
 
-class Stats:
+class Statistics:
     def __init__(self):
         self.url = None
         self.avatar = None
@@ -107,8 +107,41 @@ class PlayerStats(ABC):
         self.url = URL
         self.avatar = results.find('image', href=True).attrs['href']
 
-    def __getStats(self, type):
-        pass
+        self.__getStats(results, type)
+
+    def __getStats(self, results, type):
+        self.damage.kda = float(results.find_all('span', class_='valorant-highlighted-stat__value')[-1].text) # Get KDA
+
+        big_stats = results.find('div', class_='giant-stats')                                           # Get the 4 big stats from main page
+        stats = []
+        for stat in big_stats.find_all('div', class_='numbers'):
+            stats.append(stat.find('span', class_='value').text)
+
+        self.damage.dmg = float(stats[0])                                                             # Extract Stats from big 4
+        self.damage.kd = float(stats[1])
+        self.damage.headshotRate = float(stats[2][:-1])
+        self.game.winRate = float(stats[3][:-1])
+
+        main_stats = results.find('div', class_="main")                                                 # Get the main 12 stats
+        stats = []
+        for stat in main_stats.find_all('div', class_='numbers'):
+            stats.append(stat.find('span', class_='value').text.replace(',', ''))
+
+        self.game.wins = int(stats[0])                                                                # Extract stats from the main 12
+        self.damage.kills = int(stats[1])
+        self.damage.Headshots = int(stats[2])
+        self.damage.deaths  = int(stats[3])
+        self.damage.assists = int(stats[4])
+        self.game.scorePerRound = float(stats[5])
+        self.damage.killsPerRound = float(stats[6])
+        self.game.firstBlood = int(stats[7])
+        self.game.ace = int(stats[8])
+        self.game.clutch = int(stats[9])
+        self.game.flawless = int(stats[10])
+        self.game.mostKills = int(stats[11])
+
+        self.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
+        self.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
 
     def __getAgents(self, type):
         pass
