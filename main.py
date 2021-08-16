@@ -8,6 +8,7 @@ import logging
 
 import discord
 from discord.ext import commands
+import time
 
 import asyncio
 import threading
@@ -171,13 +172,15 @@ async def handle_graphs(message):
 
 
 # Background thread that runs once every 10 minutes
-async def background_task():
-    await bot.wait_until_ready()
+def background_task():
     while not bot.is_closed():
+        logging.info("Starting Update Sequence")
         for key in leaderboards:
+            logging.info(f"Updating Leaderboad {key}")
             leaderboards[key].update()
         for key in graphs:
+            logging.info(f"Updating Graph {key}")
             graphs[key].update()
-        await asyncio.sleep(10*60)
+        time.sleep(10*60)
 
 bot.run(TOKEN)
