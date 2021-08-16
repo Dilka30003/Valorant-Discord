@@ -1,7 +1,6 @@
-from requests.api import head
 
 
-class Player:
+class Stats:
     def __init__(self):
         self.url = None
         self.avatar = None

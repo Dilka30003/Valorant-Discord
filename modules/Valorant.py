@@ -150,6 +150,8 @@ class Valorant(commands.Cog):
                 embed.add_field(name="Headshots", value=str(player.damage.Headshots), inline=True)
                 embed.add_field(name="Clutches", value=str(player.game.clutch), inline=True)
                 embed.add_field(name="Flawless", value=str(player.game.flawless), inline=True)
+                embed.add_field(name="Ace", value=str(player.game.ace), inline=True)
+                embed.add_field(name="First Blood", value=str(player.game.firstBlood), inline=True)
                 embed.add_field(name="Headshot%", value=str(player.damage.headshotRate), inline=True)
 
                 await message.delete()
