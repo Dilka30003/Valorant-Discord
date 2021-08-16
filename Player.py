@@ -9,7 +9,6 @@ class Stats:
         self.agents = [ Agent(), Agent(), Agent() ]
         self.accuracy = Accuracy()
         self.weapons = [ Weapon(), Weapon(), Weapon() ]
-
     
 class Damage:
     dmg = None
