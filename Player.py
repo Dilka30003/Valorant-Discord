@@ -1,60 +1,25 @@
+from PIL.Image import MODES
+from requests import models
+from PlayerStats import PlayerStats, CODES, MODE
 
+class Player:
+    def __init__(self, name, tag):
+        self.name = name
+        self.tag = tag
+        self.Unrated = PlayerStats(name, tag, MODE.UNRATED)
+        self.Competitive = PlayerStats(name, tag, MODE.COMPETITIVE)
 
-class Stats:
-    def __init__(self):
-        self.url = None
-        self.avatar = None
-        self.damage = Damage()
-        self.game = Game()
-        self.agents = [ Agent(), Agent(), Agent() ]
-        self.accuracy = Accuracy()
-        self.weapons = [ Weapon(), Weapon(), Weapon() ]
+        #self.Unrated.UpdateStats()
+        #self.Competitive.UpdateStats()
     
-class Damage:
-    dmg = None
-    kda = None
-    kd = None
-    headshotRate = None
-    kills = None
-    Headshots = None
-    deaths = None
-    assists = None
-    killsPerRound = None
-    
-class Game:
-    winRate = None
-    wins = None
-    scorePerRound = None
-    firstBlood = None
-    ace = None
-    clutch = None
-    flawless = None
-    mostKills = None
-    playtime = None
-    matches = None
+    def __getitem__(self, key):
+        if key == MODE.UNRATED:
+            return self.Unrated
+        elif key == MODE.COMPETITIVE:
+            return self.Competitive
+        else:
+            raise ValueError("Value must be MODE item")
 
-class Agent:
-    name = None
-    image = None
-    time = None
-    matches = None
-    winRate = None
-    kd = None
-    dmg = None
-
-class Accuracy:
-    headRate = None
-    head = None
-    bodyRate = None
-    body = None
-    legRate = None
-    leg = None
-
-class Weapon:
-    name = None
-    image = None
-    type = None
-    headRate = None
-    bodyRate = None
-    legRate = None
-    kills = None
+if __name__ == '__main__':
+    player = Player("Dilka30003", "0000")
+    z = player[MODE.UNRATED]

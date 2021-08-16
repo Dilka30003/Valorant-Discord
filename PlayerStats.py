@@ -68,6 +68,16 @@ class Weapon:
     legRate = None
     kills = None
 
+class CODES(Enum):
+        PRIVATE = "private"
+        NOTFOUND = 404
+        OK = 0
+    
+class MODE(Enum):
+    UNRATED = 'unrated'
+    COMPETITIVE = 'competitive'
+    COMP = 'competitive'
+
 class PlayerStats():
     def __init__(self, name, tag, mode):
         self.name = name
@@ -82,40 +92,45 @@ class PlayerStats():
         self.accuracy = Accuracy()
         self.weapons = [ Weapon(), Weapon(), Weapon() ]
 
-    class CODES(Enum):
-        PRIVATE = "private"
-        NOTFOUND = 404
     
-    class MODE(Enum):
-        UNRATED = 'unrated'
-        COMPETITIVE = 'competitive'
-        COMP = 'competitive'
     
     def UpdateStats(self):
         URL = 'https://tracker.gg/valorant/profile/riot/' + self.name + '%23' + self.tag + '/overview?playlist=' + self.mode.value
         page = requests.get(URL)
 
-        #with open("page.html", "wb") as f:
-        #    f.write(page.content)
+        with open("page.html", "wb") as f:
+            f.write(page.content)
 
         soup = BeautifulSoup(page.content, 'html.parser')
 
         results = soup.find(id='app')
 
+        if page.text == '':
+            return CODES.NOTFOUND
         pageError = results.find_all('div', class_='content content--error')
         if (len(pageError) > 0):
-            if self.CODES.PRIVATE in pageError[0].text.lower():
-                return self.CODES.PRIVATE
-            if self.CODES.NOTFOUND in pageError[0].text.lower():
-                return self.CODES.NOTFOUND
+            if CODES.PRIVATE in pageError[0].text.lower():
+                return CODES.PRIVATE
+            if CODES.NOTFOUND in pageError[0].text.lower():
+                return CODES.NOTFOUND
 
         self.url = URL
         self.avatar = results.find('image', href=True).attrs['href']
 
-        self.__getStats(results)
-        self.__getAgents(results)
-        self.__getWeapons(results)
-        self.__getAccuracy(results)
+        try:
+            self.__getStats(results)
+        except: pass
+        try:
+            self.__getAgents(results)
+        except: pass
+        try:
+            self.__getWeapons(results)
+        except: pass
+        try:
+            self.__getAccuracy(results)
+        except: pass
+
+        return CODES.OK
 
     def __getStats(self, results):
         self.damage.kda = float(results.find_all('span', class_='valorant-highlighted-stat__value')[-1].text) # Get KDA
@@ -250,15 +265,13 @@ class PlayerStats():
 
 if __name__ == '__main__':
     class Test(PlayerStats):
-        CODES = PlayerStats.CODES
-        MODE = PlayerStats.MODE
         def __init__(self, name, tag):
             self.name = name
             self.tag = tag
-            self.Unrated = PlayerStats(name, tag, self.MODE.UNRATED)
+            self.Unrated = PlayerStats(name, tag, MODE.UNRATED)
     
     test = Test('Dilka30003', '0000')
-    test.Unrated.UpdateStats()
+    x = test.Unrated.UpdateStats()
     
     test.Unrated.WeaponGraphic().show()
 
