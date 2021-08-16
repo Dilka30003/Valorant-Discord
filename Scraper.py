@@ -3,7 +3,7 @@ from typing import Tuple
 import requests
 from bs4 import BeautifulSoup
 import yaml
-from Player import Player
+from Player import Stats
 from PIL import Image, ImageFont, ImageDraw
 
 
@@ -27,7 +27,7 @@ def GetPage(name:str, tag:str, type:str):
     return None, URL, results
 
 def PlayerSetup(name:str, tag:str, type:str):
-    player = Player()
+    player = Stats()
     code, URL, results = GetPage(name, tag, type)
 
     player.url = URL
@@ -35,7 +35,7 @@ def PlayerSetup(name:str, tag:str, type:str):
 
     return code, URL, results, player
 
-def GetStats(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+def GetStats(name:str = None, tag:str = None, type:str = None, player = Stats(), results = None):
     if results is None:
         code, URL, results = GetPage(name, tag, type)
 
@@ -51,7 +51,7 @@ def GetStats(name:str = None, tag:str = None, type:str = None, player = Player()
 
     player.damage.dmg = float(stats[0])                                                             # Extract Stats from big 4
     player.damage.kd = float(stats[1])
-    player.damage.headshotRate = float(stats[2])
+    player.damage.headshotRate = float(stats[2][:-1])
     player.game.winRate = float(stats[3][:-1])
 
     main_stats = results.find('div', class_="main")                                                 # Get the main 8 stats
@@ -66,20 +66,18 @@ def GetStats(name:str = None, tag:str = None, type:str = None, player = Player()
     player.damage.assists = int(stats[4])
     player.game.scorePerRound = float(stats[5])
     player.damage.killsPerRound = float(stats[6])
-    #player.game.firstBlood = int(stats[7])
-    #player.game.ace = int(stats[8])
-    player.game.firstBlood = -1
-    player.game.ace = -1
-    player.game.clutch = int(stats[7])
-    player.game.flawless = int(stats[8])
-    player.game.mostKills = int(stats[9])
+    player.game.firstBlood = int(stats[7])
+    player.game.ace = int(stats[8])
+    player.game.clutch = int(stats[9])
+    player.game.flawless = int(stats[10])
+    player.game.mostKills = int(stats[11])
 
     player.game.playtime = results.find('span', class_='playtime').text.strip()[:-10]
     player.game.matches = int(results.find('span', class_='matches').text.strip()[:-8])
 
     return 0, player
 
-def GetAgents(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+def GetAgents(name:str = None, tag:str = None, type:str = None, player = Stats(), results = None):
     if results is None:
         code, URL, results = GetPage(name, tag, type)
 
@@ -104,7 +102,7 @@ def GetAgents(name:str = None, tag:str = None, type:str = None, player = Player(
     
     return 0, player
 
-def GetWeapons(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+def GetWeapons(name:str = None, tag:str = None, type:str = None, player = Stats(), results = None):
     if results is None:
         code, URL, results = GetPage(name, tag, type)
 
@@ -129,7 +127,7 @@ def GetWeapons(name:str = None, tag:str = None, type:str = None, player = Player
 
     return 0, player
 
-def GetAccuracy(name:str = None, tag:str = None, type:str = None, player = Player(), results = None):
+def GetAccuracy(name:str = None, tag:str = None, type:str = None, player = Stats(), results = None):
     if results is None:
         code, URL, results = GetPage(name, tag, type)
 
@@ -162,7 +160,7 @@ def GetAccuracy(name:str = None, tag:str = None, type:str = None, player = Playe
     
     return 0, player
 
-def GenerateAgentGraphic(player:Player) -> Image:
+def GenerateAgentGraphic(player:Stats) -> Image:
     img = Image.new('RGBA', (1920, 1200), (255, 0, 0, 0))
     timeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
     subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
@@ -180,7 +178,7 @@ def GenerateAgentGraphic(player:Player) -> Image:
         
     return img
     
-def GenerateWeaponGraphic(player:Player) -> Image:
+def GenerateWeaponGraphic(player:Stats) -> Image:
     img = Image.new('RGBA', (1000, 1200), (255, 0, 0, 0))
     nameFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
     typeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 60)
