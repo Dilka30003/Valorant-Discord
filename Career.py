@@ -122,7 +122,7 @@ class Career():
         for i in range(len(self.GameList)):
             game = self.GameList[i]
             
-            with Image.open(f'resources/maps/{game.map}.png', 'r') as map:              # Add Map
+            with Image.open(f'resources/maps/{game.map}.png'.lower(), 'r') as map:              # Add Map
                 width, height = map.size
                 left = 0
                 top = (height/2)-128
