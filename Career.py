@@ -72,8 +72,9 @@ class Game():
         playerList = []
         for i in range(len(data['all_players'])):
             player = data['all_players'][i]
-            playerList.append((player['name'].lower(), player['tag'].lower()))
-            self.position = i+1
+            playerList.append(player)
+        self.playerList = sorted(playerList, key=lambda k: k['stats']['score'], reverse=True)
+        self.position = next((index for (index, d) in enumerate(self.playerList) if d['name'].lower() == self.name and d['tag'].lower() == self.tag), None)+1
 
 
 class Career():
@@ -93,6 +94,8 @@ class Career():
         img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
         LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
+        posFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 40)
+
         MARGIN = 10
 
         for i in range(len(self.GameList)):
@@ -144,19 +147,36 @@ class Career():
 
             draw = ImageDraw.Draw(img)
 
+            # Score
             winSize = LargeFont.getsize(f"{game.roundWins}")
             colonSize = LargeFont.getsize(":")
 
             draw.text((550, i*256 + 128-100), f"{game.roundWins}",(127,255,183),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
             draw.text((550+winSize[0]+10, i*256 + 128-100), ":",(200,200,200),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
             draw.text((550+winSize[0]+colonSize[0]+20, i*256 + 128-100), f"{game.roundLoss}",(255,88,90),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            
+            startPos = 600
+            endPos = 750
 
+            # Position
+            if game.position == 1:
+                colour = (196,183,113)
+            else:
+                colour = (128,153,187)
+
+            draw.rounded_rectangle((startPos, i*256+150, endPos, i*256+200), fill=colour, outline=(0,0,0), width=1, radius=25)
+
+            posSize = posFont.getsize(f"{game.position}")
+            draw.text((startPos+(endPos-startPos-posSize[0])//2+3, i*256 + 150+(50-posSize[1])//2-3), f"{game.position}",(0,0,0),font=posFont)
+
+            # ACS
             headingSize = subtextFont.getsize("ACS")
             scoreSize = LargeFont.getsize(f"{game.score//(game.roundWins+game.roundLoss)}")
 
             draw.text((550+300 +scoreSize[0]-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
             draw.text((550+300, i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
+            # KDA
             headingSize = subtextFont.getsize("K/D/A")
             kdaSize = LargeFont.getsize(f"{game.k}/{game.d}/{game.a}")
 
@@ -167,6 +187,6 @@ class Career():
             
 
 if __name__ == '__main__':
-    career = Career('imabandwagon', 'OCE')   # Create object for player career
+    career = Career('8888', 'nadi')   # Create object for player career
     career.Graphic()
     pass
