@@ -5,27 +5,30 @@ from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 class Game():
     def __init__(self, name:str, tag:str, gameData):
+        # Store player name and tag
         self.name = name.lower()
         self.tag = tag.lower()
 
-        self.__metadata(gameData['metadata'])
-        self.__players(gameData['players'])
+        self.__metadata(gameData['metadata'])   # Read metadata secion
+        self.__players(gameData['players'])     # Read Players Section
 
         self.roundWins = gameData['teams'][self.colour]['rounds_won']
         self.roundLoss = gameData['teams'][self.colour]['rounds_lost']
         self.hasWon = gameData['teams'][self.colour]['has_won']
         
     def __metadata(self, data):
+        # Get the map and mode of the game
         self.map = data['map']
         self.mode = data['mode']
         
     
     def __players(self, data):
+        # Player really should be a a class but i cant be bothered right now
         playerList = []
         isUser = False
         for player in data['red']:
-            playerList.append(player)
-            if player['name'].lower() == self.name and player['tag'].lower() == self.tag:
+            playerList.append(player) # Append Player to a list
+            if player['name'].lower() == self.name and player['tag'].lower() == self.tag:   # If our player is in this team, the team is allies, get their data
                 isUser = True
                 self.agent = player['character'].lower()
                 self.score = player['stats']['score']
@@ -43,6 +46,7 @@ class Game():
             self.enemies = playerList
             self.colour = 'blue'
         
+        # Do the same thing
         playerList = []
         for player in data['blue']:
             playerList.append(player)
@@ -62,6 +66,7 @@ class Game():
         else:
             self.allies = playerList
 
+        # Go through the overall playerlist to get a game leaderboard and extract our players position
         playerList = []
         for i in range(len(data['all_players'])):
             player = data['all_players'][i]
@@ -71,16 +76,18 @@ class Game():
 
 class Career():
     def __init__(self, name, tag):
+        # Get Data (Will take a while)
         data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
         # Do some error checking im too lazy to do
         games = data.json()['data']
 
+        # Iterate over every game (5 as of writing)
         self.GameList = []
         for gameData in games:
             self.GameList.append(Game(name, tag, gameData))
     
     def Graphic(self):
-        img = Image.new('RGBA', (1920, 1280), (255, 0, 0, 0))
+        img = Image.new('RGBA', (1920, 1280), (255, 0, 0, 0))                           # Create the main image and fonts
         LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
         MARGIN = 10
@@ -95,7 +102,7 @@ class Career():
                 right = width
                 bottom = (height/2)+128
 
-                cropped = map.crop((left, top, right, bottom)).convert("RGBA")
+                cropped = map.crop((left, top, right, bottom)).convert("RGBA")          # Darken Map
                 enhancer = ImageEnhance.Brightness(cropped)
                 cropped = enhancer.enhance(0.7)
                 img.paste(cropped, (MARGIN, i*256), cropped)
@@ -148,6 +155,6 @@ class Career():
             
 
 if __name__ == '__main__':
-    career = Career('Dilka30003', '0000')
+    career = Career('Dilka30003', '0000')   # Create object for player career
     career.Graphic()
     pass
