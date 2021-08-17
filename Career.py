@@ -1,7 +1,7 @@
 import requests
 import yaml
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 
@@ -22,7 +22,7 @@ class Game():
         # Get the map and mode of the game
         self.map = data['map']
         self.mode = data['mode']
-        self.gameStart = datetime.fromtimestamp(data['game_start']/1000)
+        self.gameStart = datetime.fromtimestamp(data['game_start']/1000).astimezone(tz=None)
         self.gameLength = timedelta(milliseconds=data['game_length'])
         
     
