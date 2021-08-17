@@ -37,6 +37,8 @@ class Game():
                 self.a = player['stats']['assists']
                 if self.mode == 'Competitive':
                     self.icon = str(player['currenttier'])
+                elif self.mode == 'Spike Rush':
+                    self.icon = 'spike-rush'
                 else:
                     self.icon = 'normal'
         if isUser:
@@ -84,10 +86,11 @@ class Career():
         # Iterate over every game (5 as of writing)
         self.GameList = []
         for gameData in games:
-            self.GameList.append(Game(name, tag, gameData))
+            if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
+                self.GameList.append(Game(name, tag, gameData))
     
     def Graphic(self):
-        img = Image.new('RGBA', (1920, 1280), (255, 0, 0, 0))                           # Create the main image and fonts
+        img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
         LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
         MARGIN = 10
@@ -126,35 +129,44 @@ class Career():
                 img.paste(agent, (MARGIN, i*256), agent)
             
             with Image.open(f'resources/icons/{game.icon}.png', 'r') as icon:           # Add Icon
-                if icon.size[0] != 256:
+                if game.mode == 'Spike Rush':
+                    basewidth = 240
+                    wpercent = (basewidth/float(icon.size[0]))
+                    hsize = int((float(icon.size[1])*float(wpercent)))
+                    icon = icon.resize((basewidth,hsize), Image.ANTIALIAS)
+                elif icon.size[0] != 256:
                     basewidth = 256
                     wpercent = (basewidth/float(icon.size[0]))
                     hsize = int((float(icon.size[1])*float(wpercent)))
                     icon = icon.resize((basewidth,hsize), Image.ANTIALIAS)
 
-                img.paste(icon, (MARGIN + 256 + MARGIN, i*256), icon.convert("RGBA"))
+                img.paste(icon, (MARGIN + 256 + MARGIN+((256-icon.width)//2), i*256+((256-icon.height)//2)), icon.convert("RGBA"))
 
             draw = ImageDraw.Draw(img)
 
+            winSize = LargeFont.getsize(f"{game.roundWins}")
+            colonSize = LargeFont.getsize(":")
+
             draw.text((550, i*256 + 128-100), f"{game.roundWins}",(127,255,183),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550, i*256 + 128), f"{game.roundLoss}",(255,88,90),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+winSize[0]+10, i*256 + 128-100), ":",(200,200,200),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+winSize[0]+colonSize[0]+20, i*256 + 128-100), f"{game.roundLoss}",(255,88,90),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
             headingSize = subtextFont.getsize("ACS")
             scoreSize = LargeFont.getsize(f"{game.score//(game.roundWins+game.roundLoss)}")
 
-            draw.text((550+150 +scoreSize[0]-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550+150, i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+300 +scoreSize[0]-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+300, i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
             headingSize = subtextFont.getsize("K/D/A")
             kdaSize = LargeFont.getsize(f"{game.k}/{game.d}/{game.a}")
 
-            draw.text((550+350 +kdaSize[0]-headingSize[0], i*256 + 43), "K/D/A",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550+350, i*256 + 70+43), f"{game.k}/{game.d}/{game.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+500+400-headingSize[0], i*256 + 43), "K/D/A",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+500+400-kdaSize[0], i*256 + 70+43), f"{game.k}/{game.d}/{game.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
         img.show()
             
 
 if __name__ == '__main__':
-    career = Career('Dilka30003', '0000')   # Create object for player career
+    career = Career('imabandwagon', 'OCE')   # Create object for player career
     career.Graphic()
     pass
