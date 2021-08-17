@@ -5,15 +5,19 @@ from os import listdir
 from os.path import isfile, join
 from datetime import datetime, timedelta
 import logging
+from io import BytesIO
 
 import discord
+from discord import Embed
 from discord.ext import commands
 import time
 
 import asyncio
 import threading
+
 from Leaderboard import Leaderboard, Player
 from Graph import PlayerGraph, MultiGraph
+from Career import Career
 
 # Remove the old log file if it exists and start logging
 try:
@@ -72,6 +76,7 @@ async def on_message(message):
 
     await handle_leaderboard(message)
     await handle_graphs(message)
+    await handle_career(message)
 
     await bot.process_commands(message)
 
@@ -170,6 +175,32 @@ async def handle_graphs(message):
             return
         await message.channel.send(file=file)
 
+async def handle_career(message):
+    if message.content[0:7].lower() == "=career":
+        arguments = message.content.split(' ')
+        if len(arguments) == 2:
+            try:
+                myMessage = await message.channel.send("Generating Career (this may take a while)")
+                player = arguments[1].split('#')
+                career = Career(player[0].lower(), player[1].lower())
+                if career.isValid:
+                    with BytesIO() as image_binary:
+                        image = career.Graphic()
+                        image.save(image_binary, 'PNG')
+                        image_binary.seek(0)
+                        file=discord.File(fp=image_binary, filename='image.png')
+
+                        embed = Embed(color=0xfa4454)
+                        #embed.set_author(name=f"{player[0]} Career")
+                        embed.title=f"{player[0]}\'s Career"
+                        #embed.description=mode.value
+                        embed.set_image(url="attachment://image.png")
+                        await myMessage.delete()
+                        await message.channel.send(file=file, embed=embed)
+                else:
+                    await message.channel.send("Invalid Player")
+            except:
+                await message.channel.send("Check syntax and try again")
 
 # Background thread that runs once every 10 minutes
 def background_task():
