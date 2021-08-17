@@ -1,6 +1,6 @@
 import requests
 import yaml
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 
 class Game():
@@ -52,6 +52,7 @@ class Game():
                 self.k = player['stats']['kills']
                 self.d = player['stats']['deaths']
                 self.a = player['stats']['assists']
+                self.score = player['stats']['score']
                 if self.mode == 'Competitive':
                     self.icon = str(player['currenttier'])
                 else:
@@ -60,6 +61,13 @@ class Game():
             self.enemies = playerList
         else:
             self.allies = playerList
+
+        playerList = []
+        for i in range(len(data['all_players'])):
+            player = data['all_players'][i]
+            playerList.append((player['name'].lower(), player['tag'].lower()))
+            self.position = i+1
+
 
 class Career():
     def __init__(self, name, tag):
@@ -73,7 +81,7 @@ class Career():
     
     def Graphic(self):
         img = Image.new('RGBA', (1920, 1280), (255, 0, 0, 0))
-        timeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
+        LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
         MARGIN = 10
 
@@ -88,13 +96,15 @@ class Career():
                 bottom = (height/2)+128
 
                 cropped = map.crop((left, top, right, bottom)).convert("RGBA")
+                enhancer = ImageEnhance.Brightness(cropped)
+                cropped = enhancer.enhance(0.7)
                 img.paste(cropped, (MARGIN, i*256), cropped)
 
             base = Image.new('RGBA', (img.size[0],128), (0,0,0,0))                      # Add win/loss gradient
             if game.hasWon:
-                colour = (0,255,0,200)
+                colour = (0,255,0,150)
             else:
-                colour = (255,0,0,200)
+                colour = (255,0,0,150)
             top = Image.new('RGBA', (img.size[0],128), colour)
             mask = Image.new('L', base.size)
             mask_data = []
@@ -116,8 +126,23 @@ class Career():
                     icon = icon.resize((basewidth,hsize), Image.ANTIALIAS)
 
                 img.paste(icon, (MARGIN + 256 + MARGIN, i*256), icon.convert("RGBA"))
-            
 
+            draw = ImageDraw.Draw(img)
+
+            draw.text((550, i*256 + 128-100), f"{game.roundWins}",(127,255,183),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550, i*256 + 128), f"{game.roundLoss}",(255,88,90),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            headingSize = subtextFont.getsize("ACS")
+            scoreSize = LargeFont.getsize(f"{game.score//(game.roundWins+game.roundLoss)}")
+
+            draw.text((550+150 +scoreSize[0]-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+150, i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            headingSize = subtextFont.getsize("K/D/A")
+            kdaSize = LargeFont.getsize(f"{game.k}/{game.d}/{game.a}")
+
+            draw.text((550+350 +kdaSize[0]-headingSize[0], i*256 + 43), "K/D/A",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+350, i*256 + 70+43), f"{game.k}/{game.d}/{game.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
         img.show()
             
