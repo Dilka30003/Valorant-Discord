@@ -72,22 +72,13 @@ async def on_message(message):
     logging.debug('Recieved Message: ' + message.content)
     if message.author == bot.user:
         return
-    await handle_help(message)
 
     await handle_leaderboard(message)
     await handle_graphs(message)
+    await handle_career(message)
 
     await bot.process_commands(message)
 
-async def handle_help(message):
-    if message.content[0:5].lower() == "=help": 
-        embed = Embed(color=0xfa4454)
-        embed.title="Help"
-        embed.description="Help with Valorant Commands"
-
-        embed.add_field(name="Stats", value="hi", inline=False)
-        embed.add_field(name="Agents", value="bye", inline=False)
-        embed.add_field(name="Weapons", value="hi", inline=False)
 
 async def handle_leaderboard(message):
     if message.content[0:12].lower() == "=leaderboard":
