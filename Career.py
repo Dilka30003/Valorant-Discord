@@ -115,7 +115,7 @@ class Career():
         img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
         LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
-        miniFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 40)
+        miniFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 50)
 
         MARGIN = 10
 
@@ -185,10 +185,10 @@ class Career():
             else:
                 colour = (128,153,187)
 
-            draw.rounded_rectangle((startPos, i*256+150, endPos, i*256+200), fill=colour, outline=(0,0,0), width=1, radius=25)
+            draw.rounded_rectangle((startPos, i*256+150, endPos, i*256+210), fill=colour, outline=(0,0,0), width=1, radius=25)
 
             posSize = miniFont.getsize(f"{game.position}")
-            draw.text((startPos+(endPos-startPos-posSize[0])//2+3, i*256 + 150+(50-posSize[1])//2-3), f"{game.position}",(0,0,0),font=miniFont)
+            draw.text((startPos+(endPos-startPos-posSize[0])//2, i*256 + 150+(50-posSize[1])//2), f"{game.position}",(0,0,0),font=miniFont)
 
             # ACS
             headingSize = subtextFont.getsize("ACS")
@@ -209,12 +209,13 @@ class Career():
             timeSize = miniFont.getsize(game.gameStart.strftime('%I:%M %p'))
             lengthSize = miniFont.getsize(f'{game.gameLength.seconds//60}m {game.gameLength.seconds%60}s')
 
-            draw.text((img.width-dateSize[0]-20, i*256 + 20), game.gameStart.strftime('%b %d'),(255,255,255),font=miniFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((img.width-timeSize[0]-20, i*256 + 30 + dateSize[1]), game.gameStart.strftime('%I:%M %p'),(255,255,255),font=miniFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((img.width-lengthSize[0]-20, i*256 + 40 + dateSize[1] + timeSize[1]), f'{game.gameLength.seconds//60}m {game.gameLength.seconds%60}s',(255,255,255),font=miniFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((img.width-dateSize[0]-20, i*256 + 20), game.gameStart.strftime('%b %d'),(255,255,255),font=miniFont, stroke_width=2, stroke_fill=(0,0,0))
+            draw.text((img.width-timeSize[0]-20, i*256 + 30 + dateSize[1]), game.gameStart.strftime('%I:%M %p'),(255,255,255),font=miniFont, stroke_width=2, stroke_fill=(0,0,0))
+            draw.text((img.width-lengthSize[0]-20, i*256 + 40 + dateSize[1] + timeSize[1]), f'{game.gameLength.seconds//60}m {game.gameLength.seconds%60}s',(255,255,255),font=miniFont, stroke_width=2, stroke_fill=(0,0,0))
 
 
-        img.show()
+        #img.show()
+        return img
             
 
 if __name__ == '__main__':
