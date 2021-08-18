@@ -178,7 +178,7 @@ async def handle_graphs(message):
 async def handle_career(message):
     if message.content[0:7].lower() == "=career":
         arguments = message.content.split(' ')
-        if len(arguments) > 2:
+        if len(arguments) >= 2:
             try:
                 myMessage = await message.channel.send("Generating Career (this may take a while)")
                 arguments.pop(0)
