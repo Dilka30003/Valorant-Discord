@@ -182,17 +182,23 @@ async def handle_career(message):
         arguments = message.content.split(' ')
         if len(arguments) >= 2:
             try:
-                myMessage = await message.channel.send("Generating Career (this may take a while)")
+                myMessage = await message.channel.send("Generating Career (this may take a while) USING CACHED DATA DONT FORGET TO CHANGE THIS")
                 arguments.pop(0)
                 arguments = ' '.join(arguments)
                 player = arguments.split('#')
-                career = Career(player[0], player[1])
+                career = Career(player[0], player[1], True)
                 if career.isValid:
                     with BytesIO() as image_binary:
                         embed, file = career.Graphic()
 
+                        button1 = Button(style=ButtonStyle.red, label="Game 1", custom_id=f"{player[0]}#{player[1]}#1")
+                        button2 = Button(style=ButtonStyle.red, label="Game 2", custom_id=f"{player[0]}#{player[1]}#2")
+                        button3 = Button(style=ButtonStyle.red, label="Game 3", custom_id=f"{player[0]}#{player[1]}#3")
+                        button4 = Button(style=ButtonStyle.red, label="Game 4", custom_id=f"{player[0]}#{player[1]}#4")
+                        button5 = Button(style=ButtonStyle.red, label="Game 5", custom_id=f"{player[0]}#{player[1]}#5")
+
                         await myMessage.delete()
-                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[Button(style=ButtonStyle.blue, label="Game 1", custom_id=f"{player[0]}#{player[1]}"), Button(style=ButtonStyle.blue, label="Game 2", custom_id="{player[0]}#{player[1]}")]])
+                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[button1, button2, button3, button4, button5]])
                 else:
                     await message.channel.send("Invalid Player")
             except:
@@ -202,6 +208,9 @@ async def handle_career(message):
 @bot.event
 async def on_button_click(interaction):
     if interaction.component.label.startswith("Game"):
+        id = interaction.component.custom_id.split('#')
+        career = Career(id[0], id[1], True)
+        gameNumber = int(id[2])
         await interaction.respond(type=InteractionType.ChannelMessageWithSource, content='Button Clicked')
 
 # Background thread that runs once every 10 minutes
