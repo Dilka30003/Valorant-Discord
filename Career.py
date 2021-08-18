@@ -243,7 +243,7 @@ class Career():
             file=discord.File(fp=image_binary, filename='image.png')
 
             embed = Embed(color=0xfa4454)
-            embed.set_author(name=f"{self.name}\'s Career", icon_url=self.GameList[0].player.card)
+            embed.set_author(name=f"{self.name}\'s Career", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
             #embed.title=f"{self.name}\'s Career"
             #embed.description=mode.value
             embed.set_image(url="attachment://image.png")
