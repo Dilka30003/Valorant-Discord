@@ -96,10 +96,10 @@ class PlayerStats():
     
     def UpdateStats(self):
         URL = 'https://tracker.gg/valorant/profile/riot/' + self.name + '%23' + self.tag + '/overview?playlist=' + self.mode.value
-        page = requests.get(URL)
+        #page = requests.get(URL)
 
-        with open("page.html", "wb") as f:
-            f.write(page.content)
+        #with open("page.html", "wb") as f:
+        #    f.write(page.content)
 
         soup = BeautifulSoup(page.content, 'html.parser')
 
