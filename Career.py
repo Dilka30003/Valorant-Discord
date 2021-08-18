@@ -108,27 +108,41 @@ class Career():
         NODATA = 204
         OK = 200
 
-    def __init__(self, name, tag):
+    def __init__(self, name, tag, cached = False):
         # Get Data (Will take a while)
         self.name = name
         self.tag = tag
-        data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
-        # Do some error checking im too lazy to do
-        if data.status_code == self.CODE.INVALID.value:
-            self.isValid = False
-            return
-        elif data.status_code == self.CODE.NODATA.value:
-            self.isValid = False
-            return
-        self.isValid = True
 
-        games = data.json()['data']
+        if not cached:
+            data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
 
-        # Iterate over every game (5 as of writing)
-        self.GameList = []
-        for gameData in games:
-            if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
-                self.GameList.append(Game(name.lower(), tag.lower(), gameData))
+            # Do some error checking im too lazy to do
+            if data.status_code == self.CODE.INVALID.value:
+                self.isValid = False
+                return
+            elif data.status_code == self.CODE.NODATA.value:
+                self.isValid = False
+                return
+            self.isValid = True
+
+            games = data.json()['data']
+
+            # Iterate over every game (5 as of writing)
+            self.GameList = []
+            for gameData in games:
+                if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
+                    self.GameList.append(Game(name.lower(), tag.lower(), gameData))
+            
+            with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'w') as f:
+                yaml.dump(self, f)
+        else:
+            with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'r') as f:
+                temp = yaml.load(f, Loader=yaml.Loader)
+                self.name = temp.name
+                self.tag = temp.tag
+                self.isValid = temp.isValid
+                self.GameList = temp.GameList
+
     
     def Graphic(self):
         img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
