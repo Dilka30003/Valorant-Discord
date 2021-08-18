@@ -65,6 +65,8 @@ class Game():
                 self.score = player['stats']['score']
                 if self.mode == 'Competitive':
                     self.icon = str(player['currenttier'])
+                elif self.mode == 'Spike Rush':
+                    self.icon = 'spike-rush'
                 else:
                     self.icon = 'normal'
         if isUser:
@@ -182,6 +184,8 @@ class Career():
             # Position
             if game.position == 1:
                 colour = (196,183,113)
+            elif game.position == 10:
+                colour = (230, 67, 67)
             else:
                 colour = (128,153,187)
 
@@ -194,8 +198,8 @@ class Career():
             headingSize = subtextFont.getsize("ACS")
             scoreSize = LargeFont.getsize(f"{game.score//(game.roundWins+game.roundLoss)}")
 
-            draw.text((550+400 +scoreSize[0]-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550+400, i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+550-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+550-scoreSize[0], i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
             # KDA
             headingSize = subtextFont.getsize("K/D/A")
