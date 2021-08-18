@@ -184,19 +184,11 @@ async def handle_career(message):
                 arguments.pop(0)
                 arguments = ' '.join(arguments)
                 player = arguments.split('#')
-                career = Career(player[0].lower(), player[1].lower())
+                career = Career(player[0], player[1])
                 if career.isValid:
                     with BytesIO() as image_binary:
-                        image = career.Graphic()
-                        image.save(image_binary, 'PNG')
-                        image_binary.seek(0)
-                        file=discord.File(fp=image_binary, filename='image.png')
+                        embed, file = career.Graphic()
 
-                        embed = Embed(color=0xfa4454)
-                        #embed.set_author(name=f"{player[0]} Career")
-                        embed.title=f"{player[0]}\'s Career"
-                        #embed.description=mode.value
-                        embed.set_image(url="attachment://image.png")
                         await myMessage.delete()
                         await message.channel.send(file=file, embed=embed)
                 else:

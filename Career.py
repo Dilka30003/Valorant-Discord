@@ -3,6 +3,10 @@ import yaml
 from enum import Enum
 from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
+from io import BytesIO
+
+import discord
+from discord import Embed
 
 class Player():
     def __init__(self, data):
@@ -15,6 +19,8 @@ class Player():
         self.a = data['stats']['assists']
         self.rank = data['currenttier']
         self.abilities = data['ability_casts']
+        self.card = f"https://titles.trackercdn.com/valorant-api/playercards/{data['player_card']}/displayicon.png"
+
 
     def __str__(self) -> str:
         return f"{self.name}#{self.tag}"
@@ -104,6 +110,8 @@ class Career():
 
     def __init__(self, name, tag):
         # Get Data (Will take a while)
+        self.name = name
+        self.tag = tag
         data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
         # Do some error checking im too lazy to do
         if data.status_code == self.CODE.INVALID.value:
@@ -120,7 +128,7 @@ class Career():
         self.GameList = []
         for gameData in games:
             if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
-                self.GameList.append(Game(name, tag, gameData))
+                self.GameList.append(Game(name.lower(), tag.lower(), gameData))
     
     def Graphic(self):
         img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
@@ -228,7 +236,19 @@ class Career():
 
 
         #img.show()
-        return img
+
+        with BytesIO() as image_binary:
+            img.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            file=discord.File(fp=image_binary, filename='image.png')
+
+            embed = Embed(color=0xfa4454)
+            embed.set_author(name=f"{self.name}\'s Career", icon_url=self.GameList[0].player.card)
+            #embed.title=f"{self.name}\'s Career"
+            #embed.description=mode.value
+            embed.set_image(url="attachment://image.png")
+
+            return embed, file
             
 
 if __name__ == '__main__':
