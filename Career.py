@@ -94,6 +94,9 @@ class Game():
 
         allPlayers += playerList
 
+        self.allies = sorted(self.allies, key=lambda k: k.score, reverse=True)
+        self.enemies = sorted(self.enemies, key=lambda k: k.score, reverse=True)
+
         self.playerList = sorted(allPlayers, key=lambda k: k.score, reverse=True)
         self.position = next((index for (index, d) in enumerate(self.playerList) if d.name == self.name and d.tag == self.tag), None)+1
 
@@ -263,11 +266,100 @@ class Career():
             embed.set_image(url="attachment://image.png")
 
             return embed, file
+        
+    def GameGraphic(self, gameID = 1):
+        img = Image.new('RGBA', (3840, 2560), (0,0,0,0))                           # Create the main image and fonts
+        LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
+        subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
+        miniFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 50)
+
+        MARGIN = 10
+
+        game = self.GameList[gameID-1]
+
+        base = Image.new('RGBA', (img.size[1]//2,2040), (0,0,0,0))                      # Add Green Team gradient
+        colour = (0,255,0,200)
+        top = Image.new('RGBA', (img.size[1]//2,2040), colour)
+
+        mask = Image.new('L', base.size)
+        mask_data = []
+        for y in range(base.height):
+            mask_data.extend([int(255 * (y / base.size[1]))] * base.size[0])
+        mask.putdata(mask_data)
+        base.paste(top, (0, 0), mask)
+
+        base = base.transpose(Image.ROTATE_270)
+        img.paste(base, (0,0), base)
+
+        base = Image.new('RGBA', (img.size[1]//2,2048), (0,0,0,0))                      # Add Red Team gradient
+        colour = (255,0,0,200)
+        top = Image.new('RGBA', (img.size[1]//2,2048), colour)
+
+        mask = Image.new('L', base.size)
+        mask_data = []
+        for y in range(base.height):
+            mask_data.extend([int(255 * (y / base.size[1]))] * base.size[0])
+        mask.putdata(mask_data)
+        base.paste(top, (0, 0), mask)
+
+        base = base.transpose(Image.ROTATE_270)
+        img.paste(base, (0,img.height//2), base)
+
+
+        namePos = 350
+        for i in range(len(game.allies + game.enemies)):
+            player = (game.allies + game.enemies)[i]
+            with Image.open(f'resources/agents/{player.agent}.png', 'r') as agent:         # Add Agent
+                img.paste(agent, (MARGIN, i*256), agent)
+
+            if game.mode == 'Competitive':                                                      # Add Icon
+                with Image.open(f'resources/icons/{player.rank}.png', 'r') as icon:
+                    if icon.size[0] != 256:
+                        basewidth = 256
+                        wpercent = (basewidth/float(icon.size[0]))
+                        hsize = int((float(icon.size[1])*float(wpercent)))
+                        icon = icon.resize((basewidth,hsize), Image.ANTIALIAS)
+
+                    img.paste(icon, (MARGIN + 256 + MARGIN+((256-icon.width)//2), i*256+((256-icon.height)//2)), icon.convert("RGBA"))
+                    namePos = 550
+            
+            draw = ImageDraw.Draw(img)
+
+            # Name
+            nameSize = LargeFont.getsize(f"{player.name}#{player.tag}")
+
+            draw.text((namePos, i*256 + (256-nameSize[1])//2), f"{player.name}#{player.tag}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            # Score
+            scoreSize = LargeFont.getsize(f"{player.score//(game.roundWins+game.roundLoss)}")
+
+            draw.text((1700, i*256 + (256-scoreSize[1])//2), f"{player.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            # KDA
+            kdaSize = LargeFont.getsize(f"{player.k}/{player.d}/{player.a}")
+
+            draw.text((2200, i*256 + (256-kdaSize[1])//2), f"{player.k}/{player.d}/{player.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+        #img.show()
+        with BytesIO() as image_binary:
+            img.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            file=discord.File(fp=image_binary, filename='image.png')
+
+            embed = Embed(color=0xfa4454)
+            embed.set_author(name=f"{self.name}\'s Career", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
+            #embed.title=f"{self.name}\'s Career"
+            #embed.description=mode.value
+            embed.set_image(url="attachment://image.png")
+
+            return embed, file
+
+
             
 
 if __name__ == '__main__':
-    career = Career('Dilka30003', '0000')   # Create object for player career
+    career = Career('Dilka30003', '0000', True)   # Create object for player career
     if career.isValid:
-        career.Graphic()
+        career.GameGraphic(2)
     else:
         print('invalid')

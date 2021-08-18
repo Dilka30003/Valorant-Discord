@@ -211,7 +211,10 @@ async def on_button_click(interaction):
         id = interaction.component.custom_id.split('#')
         career = Career(id[0], id[1], True)
         gameNumber = int(id[2])
-        await interaction.respond(type=InteractionType.ChannelMessageWithSource, content='Button Clicked')
+
+        embed, file = career.GameGraphic(gameNumber)
+
+        await interaction.respond(type=InteractionType.ChannelMessageWithSource, file=file, embed=embed)
 
 # Background thread that runs once every 10 minutes
 def background_task():
