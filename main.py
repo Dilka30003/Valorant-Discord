@@ -10,6 +10,7 @@ from io import BytesIO
 import discord
 from discord import Embed
 from discord.ext import commands
+from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
 import time
 
 import asyncio
@@ -62,6 +63,7 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     logging.info('Successfully Logged In as ' + bot.user.name + '   ' + str(bot.user.id))
+    DiscordComponents(bot, change_discord_methods=True)
     with open('version') as f:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f.read()))
     x = threading.Thread(target=background_task, daemon=True)
@@ -190,11 +192,17 @@ async def handle_career(message):
                         embed, file = career.Graphic()
 
                         await myMessage.delete()
-                        await message.channel.send(file=file, embed=embed)
+                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[Button(style=ButtonStyle.blue, label="Game 1", custom_id=f"{player[0]}#{player[1]}"), Button(style=ButtonStyle.blue, label="Game 2", custom_id="{player[0]}#{player[1]}")]])
                 else:
                     await message.channel.send("Invalid Player")
             except:
                 await message.channel.send("Check syntax and try again")
+
+
+@bot.event
+async def on_button_click(interaction):
+    if interaction.component.label.startswith("Game"):
+        await interaction.respond(type=InteractionType.ChannelMessageWithSource, content='Button Clicked')
 
 # Background thread that runs once every 10 minutes
 def background_task():
