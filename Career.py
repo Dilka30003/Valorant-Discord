@@ -4,12 +4,27 @@ from enum import Enum
 from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
+class Player():
+    def __init__(self, data):
+        self.name = data['name'].lower()
+        self.tag = data['tag'].lower()
+        self.agent = data['character'].lower()
+        self.score = data['stats']['score']
+        self.k = data['stats']['kills']
+        self.d = data['stats']['deaths']
+        self.a = data['stats']['assists']
+        self.rank = data['currenttier']
+        self.abilities = data['ability_casts']
+
+    def __str__(self) -> str:
+        return f"{self.name}#{self.tag}"
 
 class Game():
     def __init__(self, name:str, tag:str, gameData):
         # Store player name and tag
         self.name = name.lower()
         self.tag = tag.lower()
+        self.player = None
 
         self.__metadata(gameData['metadata'])   # Read metadata secion
         self.__players(gameData['players'])     # Read Players Section
@@ -29,18 +44,17 @@ class Game():
     def __players(self, data):
         # Player really should be a a class but i cant be bothered right now
         playerList = []
+        allPlayers = []
         isUser = False
-        for player in data['red']:
+        for playerData in data['red']:
+            player = Player(playerData)
             playerList.append(player) # Append Player to a list
-            if player['name'].lower() == self.name and player['tag'].lower() == self.tag:   # If our player is in this team, the team is allies, get their data
+            if player.name == self.name and player.tag == self.tag:   # If our player is in this team, the team is allies, get their data
                 isUser = True
-                self.agent = player['character'].lower()
-                self.score = player['stats']['score']
-                self.k = player['stats']['kills']
-                self.d = player['stats']['deaths']
-                self.a = player['stats']['assists']
+                self.player = player
+
                 if self.mode == 'Competitive':
-                    self.icon = str(player['currenttier'])
+                    self.icon = str(player.rank)
                 elif self.mode == 'Spike Rush':
                     self.icon = 'spike-rush'
                 else:
@@ -52,19 +66,17 @@ class Game():
             self.enemies = playerList
             self.colour = 'blue'
         
+        allPlayers += playerList
         # Do the same thing
         playerList = []
-        for player in data['blue']:
+        for playerData in data['blue']:
+            player = Player(playerData)
             playerList.append(player)
-            if player['name'].lower() == self.name and player['tag'].lower() == self.tag:
-                self.agent = player['character'].lower()
-                self.score = player['stats']['score']
-                self.k = player['stats']['kills']
-                self.d = player['stats']['deaths']
-                self.a = player['stats']['assists']
-                self.score = player['stats']['score']
+            if player.name == self.name and player.tag == self.tag:
+                self.player = player
+
                 if self.mode == 'Competitive':
-                    self.icon = str(player['currenttier'])
+                    self.icon = str(player.rank)
                 elif self.mode == 'Spike Rush':
                     self.icon = 'spike-rush'
                 else:
@@ -74,13 +86,10 @@ class Game():
         else:
             self.allies = playerList
 
-        # Go through the overall playerlist to get a game leaderboard and extract our players position
-        playerList = []
-        for i in range(len(data['all_players'])):
-            player = data['all_players'][i]
-            playerList.append(player)
-        self.playerList = sorted(playerList, key=lambda k: k['stats']['score'], reverse=True)
-        self.position = next((index for (index, d) in enumerate(self.playerList) if d['name'].lower() == self.name and d['tag'].lower() == self.tag), None)+1
+        allPlayers += playerList
+
+        self.playerList = sorted(allPlayers, key=lambda k: k.score, reverse=True)
+        self.position = next((index for (index, d) in enumerate(self.playerList) if d.name == self.name and d.tag == self.tag), None)+1
 
 
 class Career():
@@ -151,7 +160,7 @@ class Career():
 
             img.paste(base, (MARGIN, i*256+128), base)
             
-            with Image.open(f'resources/agents/{game.agent}.png', 'r') as agent:        # Add Agent
+            with Image.open(f'resources/agents/{game.player.agent}.png', 'r') as agent:        # Add Agent
                 img.paste(agent, (MARGIN, i*256), agent)
             
             with Image.open(f'resources/icons/{game.icon}.png', 'r') as icon:           # Add Icon
@@ -196,17 +205,17 @@ class Career():
 
             # ACS
             headingSize = subtextFont.getsize("ACS")
-            scoreSize = LargeFont.getsize(f"{game.score//(game.roundWins+game.roundLoss)}")
+            scoreSize = LargeFont.getsize(f"{game.player.score//(game.roundWins+game.roundLoss)}")
 
             draw.text((550+550-headingSize[0], i*256 + 43), "ACS",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550+550-scoreSize[0], i*256 + 70+43), f"{game.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+550-scoreSize[0], i*256 + 70+43), f"{game.player.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
             # KDA
             headingSize = subtextFont.getsize("K/D/A")
-            kdaSize = LargeFont.getsize(f"{game.k}/{game.d}/{game.a}")
+            kdaSize = LargeFont.getsize(f"{game.player.k}/{game.player.d}/{game.player.a}")
 
             draw.text((550+1050-headingSize[0], i*256 + 43), "K/D/A",(200,200,200),font=subtextFont, stroke_width=1, stroke_fill=(0,0,0))
-            draw.text((550+1050-kdaSize[0], i*256 + 70+43), f"{game.k}/{game.d}/{game.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+            draw.text((550+1050-kdaSize[0], i*256 + 70+43), f"{game.player.k}/{game.player.d}/{game.player.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
             # Date and Time
             dateSize = miniFont.getsize(game.gameStart.strftime('%b %d'))
