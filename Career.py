@@ -127,7 +127,7 @@ class Career():
         # Iterate over every game (5 as of writing)
         self.GameList = []
         for gameData in games:
-            if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush', 'custom game'):
+            if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush', 'custom game'):
                 self.GameList.append(Game(name.lower(), tag.lower(), gameData))
     
     def Graphic(self):
