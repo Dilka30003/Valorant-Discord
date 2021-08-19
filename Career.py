@@ -133,7 +133,7 @@ class Career():
             # Iterate over every game (5 as of writing)
             self.GameList = []
             for gameData in games:
-                if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
+                if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush', 'custom game'):
                     self.GameList.append(Game(name.lower(), tag.lower(), gameData))
             
             with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'w') as f:
@@ -265,7 +265,7 @@ class Career():
             #embed.description=mode.value
             embed.set_image(url="attachment://image.png")
 
-            return embed, file
+            return embed, file, len(self.GameList)
         
     def GameGraphic(self, gameID = 1):
         img = Image.new('RGBA', (3840, 2560), (0,0,0,0))                           # Create the main image and fonts
@@ -354,12 +354,69 @@ class Career():
 
             return embed, file
 
+    ranks = {
+        3 : 'Iron 1    ',
+        4 : 'Iron 2    ',
+        5 : 'Iron 3    ',
+        6 : 'Bronze 1  ',
+        7 : 'Bronze 2  ',
+        8 : 'Bronze 3  ',
+        9 : 'Silver 1  ',
+        10: 'Silver 2  ',
+        11: 'Silver 3  ',
+        12: 'Gold 1    ',
+        13: 'Gold 2    ',
+        14: 'Gold 3    ',
+        15: 'Platinum 1',
+        16: 'Platinum 2',
+        17: 'Platinum 3',
+        18: 'Diamond 1 ',
+        19: 'Diamond 2 ',
+        20: 'Diamond 3 ',
+        21: 'Immortal 1',
+        22: 'Immortal 2',
+        23: 'Immortal 3',
+        24: 'Radiant   '
+    }
 
+    def GameText(self, gameID = 1):
+        game = self.GameList[gameID-1]
+
+        message = ['']*10
+
+        for i in range(len(game.allies + game.enemies)):
+            player = (game.allies + game.enemies)[i]
+            message[i] += player.agent.ljust(10)
+
+            if game.mode == 'Competitive':                                                      # Add Icon
+                message[i] += self.ranks[player.rank] + '  '
+            
+            # Name
+            message[i] += f"{player.name}#{player.tag}".ljust(22)
+
+            # Score
+            message[i] += f"{player.score//(game.roundWins+game.roundLoss)}  ".ljust(5)
+
+            # KDA
+            message[i] += f"{player.k}/{player.d}/{player.a}"
+
+        message.insert(0, 'Allies')
+        message.insert(6, 'Enemies')
+
+        for i in range(len(message)-1):
+            message[i] += '\n'
+        
+
+        embed = Embed(color=0xfa4454)
+        embed.set_author(name=f"{self.name}\'s Career    {game.map} {game.roundWins}:{game.roundLoss}", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
+        embed.add_field(name="Leaderboard", value='```\n' + ''.join(message) + '\n```', inline=False)
+
+        return embed
             
 
 if __name__ == '__main__':
     career = Career('Dilka30003', '0000', True)   # Create object for player career
     if career.isValid:
-        career.GameGraphic(2)
+        career.GameText(2)
     else:
         print('invalid')

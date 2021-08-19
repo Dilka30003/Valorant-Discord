@@ -182,14 +182,14 @@ async def handle_career(message):
         arguments = message.content.split(' ')
         if len(arguments) >= 2:
             try:
-                myMessage = await message.channel.send("Generating Career (this may take a while) USING CACHED DATA DONT FORGET TO CHANGE THIS")
+                myMessage = await message.channel.send("Generating Career (this may take a while)")
                 arguments.pop(0)
                 arguments = ' '.join(arguments)
                 player = arguments.split('#')
-                career = Career(player[0], player[1], True)
+                career = Career(player[0], player[1])
                 if career.isValid:
                     with BytesIO() as image_binary:
-                        embed, file = career.Graphic()
+                        embed, file, gameNumber = career.Graphic()
 
                         button1 = Button(style=ButtonStyle.red, label="Game 1", custom_id=f"{player[0]}#{player[1]}#1")
                         button2 = Button(style=ButtonStyle.red, label="Game 2", custom_id=f"{player[0]}#{player[1]}#2")
@@ -198,7 +198,7 @@ async def handle_career(message):
                         button5 = Button(style=ButtonStyle.red, label="Game 5", custom_id=f"{player[0]}#{player[1]}#5")
 
                         await myMessage.delete()
-                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[button1, button2, button3, button4, button5]])
+                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[button1, button2, button3, button4, button5][0:gameNumber]])
                 else:
                     await message.channel.send("Invalid Player")
             except:
@@ -212,9 +212,9 @@ async def on_button_click(interaction):
         career = Career(id[0], id[1], True)
         gameNumber = int(id[2])
 
-        embed, file = career.GameGraphic(gameNumber)
+        embed = career.GameText(gameNumber)
 
-        await interaction.respond(type=InteractionType.ChannelMessageWithSource, file=file, embed=embed)
+        await interaction.respond(type=InteractionType.ChannelMessageWithSource, embed=embed)
 
 # Background thread that runs once every 10 minutes
 def background_task():
