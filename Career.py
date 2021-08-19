@@ -138,6 +138,10 @@ class Career():
             
             with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'w') as f:
                 yaml.dump(self, f)
+            
+            for i in range(len(self.GameList)):
+                self.GameGraphic(i+1, True)
+
         else:
             with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'r') as f:
                 temp = yaml.load(f, Loader=yaml.Loader)
@@ -267,7 +271,7 @@ class Career():
 
             return embed, file, len(self.GameList)
         
-    def GameGraphic(self, gameID = 1):
+    def GameGraphic(self, gameID = 1, cache = False):
         img = Image.new('RGBA', (3840, 2560), (0,0,0,0))                           # Create the main image and fonts
         LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
         subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
@@ -340,6 +344,9 @@ class Career():
 
             draw.text((2200, i*256 + (256-kdaSize[1])//2), f"{player.k}/{player.d}/{player.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
 
+        if cache:
+            img.save(f'storage\career\{self.name.lower()}#{self.tag.lower()}#{gameID}.png', 'PNG')
+
         #img.show()
         with BytesIO() as image_binary:
             img.save(image_binary, 'PNG')
@@ -350,9 +357,11 @@ class Career():
             embed.set_author(name=f"{self.name}\'s Career", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
             #embed.title=f"{self.name}\'s Career"
             #embed.description=mode.value
-            embed.set_image(url="attachment://image.png")
+            #embed.set_image(url="attachment://image.png")
 
             return embed, file
+
+
 
     ranks = {
         3 : 'Iron 1    ',

@@ -209,13 +209,23 @@ async def handle_career(message):
 @bot.event
 async def on_button_click(interaction):
     if interaction.component.label.startswith("Game"):
+        #await interaction.respond(type=InteractionType.DeferredChannelMessageWithSource)
         id = interaction.component.custom_id.split('#')
         career = Career(id[0], id[1], True)
         gameNumber = int(id[2])
 
-        embed = career.GameText(gameNumber)
+        embed, file = career.GameGraphic(gameNumber, True)
+        spamChannel=bot.get_channel(877841105029300248)
+
+        imageMessage = await spamChannel.send(file=file)
+        image = imageMessage.attachments[0].url
+        embed.set_image(url=image)
 
         await interaction.respond(type=InteractionType.ChannelMessageWithSource, embed=embed)
+        #await imageMessage.delete()
+
+
+
 
 # Background thread that runs once every 10 minutes
 def background_task():
