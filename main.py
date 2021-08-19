@@ -201,8 +201,9 @@ async def handle_career(message):
                         await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[button1, button2, button3, button4, button5][0:gameNumber]])
                 else:
                     await message.channel.send("Invalid Player")
-            except:
+            except Exception as e:
                 await message.channel.send("Check syntax and try again")
+                logging.error(e)
 
 
 @bot.event
