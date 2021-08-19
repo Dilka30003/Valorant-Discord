@@ -133,7 +133,7 @@ class Career():
             # Iterate over every game (5 as of writing)
             self.GameList = []
             for gameData in games:
-                if gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
+                if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush'):
                     self.GameList.append(Game(name.lower(), tag.lower(), gameData))
             
             with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'w') as f:
