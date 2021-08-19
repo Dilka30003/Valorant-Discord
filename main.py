@@ -214,7 +214,7 @@ async def on_button_click(interaction):
         career = Career(id[0], id[1], True)
         gameNumber = int(id[2])
 
-        embed, file = career.GameGraphic(gameNumber, True)
+        embed, file = career.OpenGameGraphic(gameNumber)
         spamChannel=bot.get_channel(877841105029300248)
 
         imageMessage = await spamChannel.send(file=file)
