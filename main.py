@@ -10,6 +10,7 @@ from io import BytesIO
 import discord
 from discord import Embed
 from discord.ext import commands
+from discord_components import DiscordComponents, Button, ButtonStyle, InteractionType
 import time
 
 import asyncio
@@ -62,6 +63,7 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     logging.info('Successfully Logged In as ' + bot.user.name + '   ' + str(bot.user.id))
+    DiscordComponents(bot, change_discord_methods=True)
     with open('version') as f:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f.read()))
     x = threading.Thread(target=background_task, daemon=True)
@@ -187,14 +189,32 @@ async def handle_career(message):
                 career = Career(player[0], player[1])
                 if career.isValid:
                     with BytesIO() as image_binary:
-                        embed, file = career.Graphic()
+                        embed, file, gameNumber = career.Graphic()
+
+                        button1 = Button(style=ButtonStyle.red, label="Game 1", custom_id=f"{player[0]}#{player[1]}#1")
+                        button2 = Button(style=ButtonStyle.red, label="Game 2", custom_id=f"{player[0]}#{player[1]}#2")
+                        button3 = Button(style=ButtonStyle.red, label="Game 3", custom_id=f"{player[0]}#{player[1]}#3")
+                        button4 = Button(style=ButtonStyle.red, label="Game 4", custom_id=f"{player[0]}#{player[1]}#4")
+                        button5 = Button(style=ButtonStyle.red, label="Game 5", custom_id=f"{player[0]}#{player[1]}#5")
 
                         await myMessage.delete()
-                        await message.channel.send(file=file, embed=embed)
+                        await message.channel.send(file=file, embed=embed, type=InteractionType.ChannelMessageWithSource, components=[[button1, button2, button3, button4, button5][0:gameNumber]])
                 else:
                     await message.channel.send("Invalid Player")
             except:
                 await message.channel.send("Check syntax and try again")
+
+
+@bot.event
+async def on_button_click(interaction):
+    if interaction.component.label.startswith("Game"):
+        id = interaction.component.custom_id.split('#')
+        career = Career(id[0], id[1], True)
+        gameNumber = int(id[2])
+
+        embed = career.GameText(gameNumber)
+
+        await interaction.respond(type=InteractionType.ChannelMessageWithSource, embed=embed)
 
 # Background thread that runs once every 10 minutes
 def background_task():

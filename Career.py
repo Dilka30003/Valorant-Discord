@@ -94,6 +94,9 @@ class Game():
 
         allPlayers += playerList
 
+        self.allies = sorted(self.allies, key=lambda k: k.score, reverse=True)
+        self.enemies = sorted(self.enemies, key=lambda k: k.score, reverse=True)
+
         self.playerList = sorted(allPlayers, key=lambda k: k.score, reverse=True)
         self.position = next((index for (index, d) in enumerate(self.playerList) if d.name == self.name and d.tag == self.tag), None)+1
 
@@ -108,27 +111,41 @@ class Career():
         NODATA = 204
         OK = 200
 
-    def __init__(self, name, tag):
+    def __init__(self, name, tag, cached = False):
         # Get Data (Will take a while)
         self.name = name
         self.tag = tag
-        data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
-        # Do some error checking im too lazy to do
-        if data.status_code == self.CODE.INVALID.value:
-            self.isValid = False
-            return
-        elif data.status_code == self.CODE.NODATA.value:
-            self.isValid = False
-            return
-        self.isValid = True
 
-        games = data.json()['data']
+        if not cached:
+            data = requests.get(f'https://api.henrikdev.xyz/valorant/v3/matches/ap/{name}/{tag}')
 
-        # Iterate over every game (5 as of writing)
-        self.GameList = []
-        for gameData in games:
-            if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush', 'custom game'):
-                self.GameList.append(Game(name.lower(), tag.lower(), gameData))
+            # Do some error checking im too lazy to do
+            if data.status_code == self.CODE.INVALID.value:
+                self.isValid = False
+                return
+            elif data.status_code == self.CODE.NODATA.value:
+                self.isValid = False
+                return
+            self.isValid = True
+
+            games = data.json()['data']
+
+            # Iterate over every game (5 as of writing)
+            self.GameList = []
+            for gameData in games:
+                if 'mode' in gameData['metadata'] and gameData['metadata']['mode'].lower() in ('unrated', 'competitive', 'spike rush', 'custom game'):
+                    self.GameList.append(Game(name.lower(), tag.lower(), gameData))
+            
+            with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'w') as f:
+                yaml.dump(self, f)
+        else:
+            with open(f"storage/career/{self.name.lower()}#{self.tag.lower()}", 'r') as f:
+                temp = yaml.load(f, Loader=yaml.Loader)
+                self.name = temp.name
+                self.tag = temp.tag
+                self.isValid = temp.isValid
+                self.GameList = temp.GameList
+
     
     def Graphic(self):
         img = Image.new('RGBA', (1920, 256*len(self.GameList)), (255, 0, 0, 0))                           # Create the main image and fonts
@@ -248,12 +265,158 @@ class Career():
             #embed.description=mode.value
             embed.set_image(url="attachment://image.png")
 
+            return embed, file, len(self.GameList)
+        
+    def GameGraphic(self, gameID = 1):
+        img = Image.new('RGBA', (3840, 2560), (0,0,0,0))                           # Create the main image and fonts
+        LargeFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 100)
+        subtextFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 70)
+        miniFont = ImageFont.truetype("Roboto/Roboto-Medium.ttf", 50)
+
+        MARGIN = 10
+
+        game = self.GameList[gameID-1]
+
+        base = Image.new('RGBA', (img.size[1]//2,2040), (0,0,0,0))                      # Add Green Team gradient
+        colour = (0,255,0,200)
+        top = Image.new('RGBA', (img.size[1]//2,2040), colour)
+
+        mask = Image.new('L', base.size)
+        mask_data = []
+        for y in range(base.height):
+            mask_data.extend([int(255 * (y / base.size[1]))] * base.size[0])
+        mask.putdata(mask_data)
+        base.paste(top, (0, 0), mask)
+
+        base = base.transpose(Image.ROTATE_270)
+        img.paste(base, (0,0), base)
+
+        base = Image.new('RGBA', (img.size[1]//2,2048), (0,0,0,0))                      # Add Red Team gradient
+        colour = (255,0,0,200)
+        top = Image.new('RGBA', (img.size[1]//2,2048), colour)
+
+        mask = Image.new('L', base.size)
+        mask_data = []
+        for y in range(base.height):
+            mask_data.extend([int(255 * (y / base.size[1]))] * base.size[0])
+        mask.putdata(mask_data)
+        base.paste(top, (0, 0), mask)
+
+        base = base.transpose(Image.ROTATE_270)
+        img.paste(base, (0,img.height//2), base)
+
+
+        namePos = 350
+        for i in range(len(game.allies + game.enemies)):
+            player = (game.allies + game.enemies)[i]
+            with Image.open(f'resources/agents/{player.agent}.png', 'r') as agent:         # Add Agent
+                img.paste(agent, (MARGIN, i*256), agent)
+
+            if game.mode == 'Competitive':                                                      # Add Icon
+                with Image.open(f'resources/icons/{player.rank}.png', 'r') as icon:
+                    if icon.size[0] != 256:
+                        basewidth = 256
+                        wpercent = (basewidth/float(icon.size[0]))
+                        hsize = int((float(icon.size[1])*float(wpercent)))
+                        icon = icon.resize((basewidth,hsize), Image.ANTIALIAS)
+
+                    img.paste(icon, (MARGIN + 256 + MARGIN+((256-icon.width)//2), i*256+((256-icon.height)//2)), icon.convert("RGBA"))
+                    namePos = 550
+            
+            draw = ImageDraw.Draw(img)
+
+            # Name
+            nameSize = LargeFont.getsize(f"{player.name}#{player.tag}")
+
+            draw.text((namePos, i*256 + (256-nameSize[1])//2), f"{player.name}#{player.tag}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            # Score
+            scoreSize = LargeFont.getsize(f"{player.score//(game.roundWins+game.roundLoss)}")
+
+            draw.text((1700, i*256 + (256-scoreSize[1])//2), f"{player.score//(game.roundWins+game.roundLoss)}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+            # KDA
+            kdaSize = LargeFont.getsize(f"{player.k}/{player.d}/{player.a}")
+
+            draw.text((2200, i*256 + (256-kdaSize[1])//2), f"{player.k}/{player.d}/{player.a}",(255,255,255),font=LargeFont, stroke_width=1, stroke_fill=(0,0,0))
+
+        #img.show()
+        with BytesIO() as image_binary:
+            img.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            file=discord.File(fp=image_binary, filename='image.png')
+
+            embed = Embed(color=0xfa4454)
+            embed.set_author(name=f"{self.name}\'s Career", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
+            #embed.title=f"{self.name}\'s Career"
+            #embed.description=mode.value
+            embed.set_image(url="attachment://image.png")
+
             return embed, file
+
+    ranks = {
+        3 : 'Iron 1    ',
+        4 : 'Iron 2    ',
+        5 : 'Iron 3    ',
+        6 : 'Bronze 1  ',
+        7 : 'Bronze 2  ',
+        8 : 'Bronze 3  ',
+        9 : 'Silver 1  ',
+        10: 'Silver 2  ',
+        11: 'Silver 3  ',
+        12: 'Gold 1    ',
+        13: 'Gold 2    ',
+        14: 'Gold 3    ',
+        15: 'Platinum 1',
+        16: 'Platinum 2',
+        17: 'Platinum 3',
+        18: 'Diamond 1 ',
+        19: 'Diamond 2 ',
+        20: 'Diamond 3 ',
+        21: 'Immortal 1',
+        22: 'Immortal 2',
+        23: 'Immortal 3',
+        24: 'Radiant   '
+    }
+
+    def GameText(self, gameID = 1):
+        game = self.GameList[gameID-1]
+
+        message = ['']*10
+
+        for i in range(len(game.allies + game.enemies)):
+            player = (game.allies + game.enemies)[i]
+            message[i] += player.agent.ljust(10)
+
+            if game.mode == 'Competitive':                                                      # Add Icon
+                message[i] += self.ranks[player.rank] + '  '
+            
+            # Name
+            message[i] += f"{player.name}#{player.tag}".ljust(22)
+
+            # Score
+            message[i] += f"{player.score//(game.roundWins+game.roundLoss)}  ".ljust(5)
+
+            # KDA
+            message[i] += f"{player.k}/{player.d}/{player.a}"
+
+        message.insert(0, 'Allies')
+        message.insert(6, 'Enemies')
+
+        for i in range(len(message)-1):
+            message[i] += '\n'
+        
+
+        embed = Embed(color=0xfa4454)
+        embed.set_author(name=f"{self.name}\'s Career    {game.map} {game.roundWins}:{game.roundLoss}", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", icon_url=self.GameList[0].player.card)
+        embed.add_field(name="Leaderboard", value='```\n' + ''.join(message) + '\n```', inline=False)
+
+        return embed
             
 
 if __name__ == '__main__':
-    career = Career('Dilka30003', '0000')   # Create object for player career
+    career = Career('Dilka30003', '0000', True)   # Create object for player career
     if career.isValid:
-        career.Graphic()
+        career.GameText(2)
     else:
         print('invalid')
